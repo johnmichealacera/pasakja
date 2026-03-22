@@ -17,7 +17,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Car, Menu, LogOut, User, ChevronRight } from "lucide-react";
+import {
+  Car,
+  Menu,
+  LogOut,
+  User,
+  ChevronRight,
+  LayoutDashboard,
+  PlusCircle,
+  History,
+  AlertCircle,
+  List,
+  DollarSign,
+  Navigation,
+  BookOpen,
+  Users,
+  MapPin,
+  BarChart3,
+  Settings,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -26,10 +44,47 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+const ROLE_NAV_ITEMS: Record<
+  "passenger" | "driver" | "admin",
+  { title: string; navItems: NavItem[] }
+> = {
+  passenger: {
+    title: "Passenger Portal",
+    navItems: [
+      { label: "Dashboard", href: "/passenger", icon: LayoutDashboard },
+      { label: "Book a Ride", href: "/passenger/book", icon: PlusCircle },
+      { label: "My Trips", href: "/passenger/trips", icon: History },
+      { label: "SOS Alert", href: "/passenger/sos", icon: AlertCircle },
+      { label: "Profile", href: "/passenger/profile", icon: User },
+    ],
+  },
+  driver: {
+    title: "Driver Portal",
+    navItems: [
+      { label: "Dashboard", href: "/driver", icon: LayoutDashboard },
+      { label: "Booking Requests", href: "/driver/bookings", icon: List },
+      { label: "Navigation", href: "/driver/navigate", icon: Navigation },
+      { label: "My Earnings", href: "/driver/earnings", icon: DollarSign },
+      { label: "Profile", href: "/driver/profile", icon: User },
+    ],
+  },
+  admin: {
+    title: "Admin Panel",
+    navItems: [
+      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { label: "Bookings", href: "/admin/bookings", icon: BookOpen },
+      { label: "Drivers", href: "/admin/drivers", icon: Car },
+      { label: "Passengers", href: "/admin/passengers", icon: Users },
+      { label: "Fare & Zones", href: "/admin/fares", icon: MapPin },
+      { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+      { label: "Settings", href: "/admin/settings", icon: Settings },
+    ],
+  },
+};
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  navItems: NavItem[];
-  title: string;
+  title?: string;
   role: "passenger" | "driver" | "admin";
 }
 
@@ -82,13 +137,15 @@ function NavContent({
 
 export function DashboardLayout({
   children,
-  navItems,
-  title,
+  title: titleProp,
   role,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { title, navItems } = ROLE_NAV_ITEMS[role];
+  const displayTitle = titleProp ?? title;
 
   const userInitials = session?.user?.name
     ?.split(" ")
@@ -106,7 +163,7 @@ export function DashboardLayout({
             <Car className="h-6 w-6" />
             <span className="font-bold text-lg">Pasakja</span>
           </Link>
-          <p className="text-xs text-muted-foreground mt-1">{title}</p>
+          <p className="text-xs text-muted-foreground mt-1">{displayTitle}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -159,10 +216,10 @@ export function DashboardLayout({
           </Sheet>
 
           <h1 className="font-semibold text-base md:text-lg hidden md:block">
-            {navItems.find((item) => item.href === pathname)?.label ?? title}
+            {navItems.find((item) => item.href === pathname)?.label ?? displayTitle}
           </h1>
           <h1 className="font-semibold text-base md:hidden">
-            {navItems.find((item) => item.href === pathname)?.label ?? title}
+            {navItems.find((item) => item.href === pathname)?.label ?? displayTitle}
           </h1>
 
           <DropdownMenu>
