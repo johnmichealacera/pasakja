@@ -1,13 +1,213 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum DriverStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  PICKED_UP
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  ONLINE
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      UserRole @default(PASSENGER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  passenger     Passenger?
+  driver        Driver?
+  admin         Admin?
+  notifications Notification[]
+
+  @@index([email])
+}
+
+model Passenger {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookings   Booking[]
+  ratings    Rating[]
+  sosAlerts  SosAlert[]
+}
+
+model Driver {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseNo    String       @unique
+  vehicleType  String
+  vehiclePlate String
+  vehicleModel String
+  status       DriverStatus @default(PENDING)
+  isAvailable  Boolean      @default(false)
+  currentLat   Float?
+  currentLng   Float?
+  totalEarnings Decimal     @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  bookings  Booking[]
+  ratings   Rating[]
+  earnings  Earning[]
+
+  @@index([status, isAvailable])
+}
+
+model Admin {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Zone {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  fares Fare[]
+}
+
+model Fare {
+  id        String   @id @default(cuid())
+  zoneId    String
+  zone      Zone     @relation(fields: [zoneId], references: [id])
+  baseFare  Decimal  @db.Decimal(10, 2)
+  perKmRate Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zoneId])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  passengerId    String
+  passenger      Passenger     @relation(fields: [passengerId], references: [id])
+  driverId       String?
+  driver         Driver?       @relation(fields: [driverId], references: [id])
+  pickupLat      Float
+  pickupLng      Float
+  pickupAddress  String
+  dropoffLat     Float
+  dropoffLng     Float
+  dropoffAddress String
+  status         BookingStatus @default(PENDING)
+  fare           Decimal?      @db.Decimal(10, 2)
+  paymentMethod  PaymentMethod @default(CASH)
+  paymentStatus  PaymentStatus @default(UNPAID)
+  isShared       Boolean       @default(false)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  trip   Trip?
+  rating Rating?
+
+  @@index([passengerId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model Trip {
+  id        String    @id @default(cuid())
+  bookingId String    @unique
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  startTime DateTime?
+  endTime   DateTime?
+  distance  Float?
+  createdAt DateTime  @default(now())
+}
+
+model Rating {
+  id          String    @id @default(cuid())
+  bookingId   String    @unique
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  passengerId String
+  passenger   Passenger @relation(fields: [passengerId], references: [id])
+  driverId    String
+  driver      Driver    @relation(fields: [driverId], references: [id])
+  score       Int
+  comment     String?
+  createdAt   DateTime  @default(now())
+
+  @@index([driverId])
+  @@index([passengerId])
+}
+
+model Earning {
+  id        String   @id @default(cuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id])
+  bookingId String?
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime @default(now())
+
+  @@index([driverId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model SosAlert {
+  id          String    @id @default(cuid())
+  passengerId String
+  passenger   Passenger @relation(fields: [passengerId], references: [id])
+  bookingId   String?
+  lat         Float
+  lng         Float
+  message     String?
+  isResolved  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([passengerId, isResolved])
 }
