@@ -1,5 +1,6 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Banknote, CreditCard } from "lucide-react";
 import { format } from "date-fns";
@@ -13,12 +14,16 @@ const statusConfig = {
   CANCELLED: { label: "Cancelled", variant: "destructive" as const },
 };
 
+const bookingInclude = {
+  passenger: { include: { user: { select: { name: true } } } },
+  driver: { include: { user: { select: { name: true } } } },
+} as const;
+
+type AdminBookingRow = Prisma.BookingGetPayload<{ include: typeof bookingInclude }>;
+
 export default async function AdminBookingsPage() {
-  const bookings = await prisma.booking.findMany({
-    include: {
-      passenger: { include: { user: { select: { name: true } } } },
-      driver: { include: { user: { select: { name: true } } } },
-    },
+  const bookings: AdminBookingRow[] = await prisma.booking.findMany({
+    include: bookingInclude,
     orderBy: { createdAt: "desc" },
   });
 
@@ -38,7 +43,7 @@ export default async function AdminBookingsPage() {
             </CardContent>
           </Card>
         ) : (
-          bookings.map((booking) => {
+          bookings.map((booking: AdminBookingRow) => {
             const config = statusConfig[booking.status];
             return (
               <Card key={booking.id}>
