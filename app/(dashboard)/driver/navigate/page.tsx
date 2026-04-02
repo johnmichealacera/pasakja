@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation, Phone } from "lucide-react";
+import { TripMap } from "@/components/maps/trip-map";
 
 export default async function DriverNavigatePage() {
   const session = await auth();
@@ -95,16 +96,17 @@ export default async function DriverNavigatePage() {
             </CardContent>
           </Card>
 
-          {/* Map placeholder */}
           <Card>
-            <CardContent className="p-0">
-              <div className="h-64 bg-muted rounded-lg flex flex-col items-center justify-center gap-2">
-                <Navigation className="h-10 w-10 text-primary" />
-                <p className="font-medium text-sm">Map View</p>
-                <p className="text-xs text-muted-foreground text-center px-4">
-                  GPS map integration will be available here. Connect a mapping API (Google Maps, Leaflet) for live navigation.
-                </p>
-              </div>
+            <CardContent className="p-4">
+              <TripMap
+                pickup={{ lat: activeBooking.pickupLat, lng: activeBooking.pickupLng }}
+                destination={{
+                  lat: activeBooking.dropoffLat,
+                  lng: activeBooking.dropoffLng,
+                }}
+                driverId={driver!.id}
+                driverOnline={driver!.isAvailable}
+              />
             </CardContent>
           </Card>
         </>

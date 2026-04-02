@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, CreditCard, Banknote, Users, CheckCircle } from "lucide-react";
+import { CreditCard, Banknote, Users, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+import { MapPicker, type MapPickerValue } from "@/components/maps/map-picker";
 
 type PaymentMethod = "CASH" | "ONLINE";
 
@@ -19,20 +19,32 @@ export default function BookRidePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [isShared, setIsShared] = useState(false);
-  const [form, setForm] = useState({
-    pickupAddress: "",
-    dropoffAddress: "",
-    notes: "",
+  const [form, setForm] = useState({ notes: "" });
+  const [picked, setPicked] = useState<MapPickerValue>({
+    pickup: null,
+    destination: null,
   });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleMapChange = useCallback((v: MapPickerValue) => {
+    setPicked((prev) => {
+      const samePickup =
+        prev.pickup?.lat === v.pickup?.lat && prev.pickup?.lng === v.pickup?.lng;
+      const sameDestination =
+        prev.destination?.lat === v.destination?.lat &&
+        prev.destination?.lng === v.destination?.lng;
+      if (samePickup && sameDestination) return prev;
+      return v;
+    });
+  }, []);
+
+  function handleNotesChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setForm((prev) => ({ ...prev, notes: e.target.value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.pickupAddress.trim() || !form.dropoffAddress.trim()) {
-      toast.error("Please enter both pickup and drop-off locations.");
+    if (!picked.pickup || !picked.destination) {
+      toast.error("Please set both pickup and destination on the map.");
       return;
     }
     setIsLoading(true);
@@ -42,13 +54,15 @@ export default function BookRidePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          notes: form.notes,
           paymentMethod,
           isShared,
-          pickupLat: 9.6234,
-          pickupLng: 125.9685,
-          dropoffLat: 9.6234,
-          dropoffLng: 125.9685,
+          pickupLat: picked.pickup.lat,
+          pickupLng: picked.pickup.lng,
+          pickupAddress: "GPS Pickup",
+          dropoffLat: picked.destination.lat,
+          dropoffLng: picked.destination.lng,
+          dropoffAddress: "Selected Destination",
         }),
       });
 
@@ -82,47 +96,28 @@ export default function BookRidePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pickupAddress" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-green-500" /> Pickup Location
-              </Label>
-              <Input
-                id="pickupAddress"
-                name="pickupAddress"
-                placeholder="e.g. Socorro Town Hall, Surigao del Norte"
-                value={form.pickupAddress}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-              />
-            </div>
+              <p className="text-sm font-medium text-foreground">
+                Select your route on the map
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Pickup is taken from GPS. Click the map to set your destination.
+              </p>
 
-            <div className="relative flex items-center justify-center my-1">
-              <div className="border-l-2 border-dashed border-muted-foreground/30 h-4 absolute left-3.5" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dropoffAddress" className="flex items-center gap-2">
-                <Navigation className="h-4 w-4 text-red-500" /> Drop-off Location
-              </Label>
-              <Input
-                id="dropoffAddress"
-                name="dropoffAddress"
-                placeholder="e.g. Socorro Market, Surigao del Norte"
-                value={form.dropoffAddress}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
+              <MapPicker
+                onChange={handleMapChange}
+                heightClassName="h-[360px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Special Instructions (optional)</Label>
+              <label htmlFor="notes" className="text-sm font-medium text-muted-foreground">
+                Special Instructions (optional)
+              </label>
               <Textarea
                 id="notes"
-                name="notes"
                 placeholder="Any special notes for the driver..."
                 value={form.notes}
-                onChange={handleChange}
+                onChange={handleNotesChange}
                 rows={2}
                 disabled={isLoading}
               />
