@@ -50,6 +50,27 @@ export default function BookRidePage() {
     setIsLoading(true);
 
     try {
+      const [pickupGeoRes, destinationGeoRes] = await Promise.all([
+        fetch(
+          `/api/maps/reverse?lat=${picked.pickup.lat}&lng=${picked.pickup.lng}`
+        ),
+        fetch(
+          `/api/maps/reverse?lat=${picked.destination.lat}&lng=${picked.destination.lng}`
+        ),
+      ]);
+
+      const pickupGeoData = pickupGeoRes.ok
+        ? ((await pickupGeoRes.json()) as { address?: string | null })
+        : null;
+      const destinationGeoData = destinationGeoRes.ok
+        ? ((await destinationGeoRes.json()) as { address?: string | null })
+        : null;
+
+      const pickupAddress =
+        pickupGeoData?.address?.trim() || "GPS Pickup";
+      const dropoffAddress =
+        destinationGeoData?.address?.trim() || "Selected Destination";
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,10 +80,10 @@ export default function BookRidePage() {
           isShared,
           pickupLat: picked.pickup.lat,
           pickupLng: picked.pickup.lng,
-          pickupAddress: "GPS Pickup",
+          pickupAddress,
           dropoffLat: picked.destination.lat,
           dropoffLng: picked.destination.lng,
-          dropoffAddress: "Selected Destination",
+          dropoffAddress,
         }),
       });
 

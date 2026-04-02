@@ -4,8 +4,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MapPin, Users, Banknote, CreditCard } from "lucide-react";
 import { BookingActions } from "@/components/driver/booking-actions";
+import Link from "next/link";
+import { TripMap } from "@/components/maps/trip-map";
 
 export default async function DriverBookingsPage() {
   const session = await auth();
@@ -100,6 +103,23 @@ export default async function DriverBookingsPage() {
                       </div>
                     </div>
                     <BookingActions booking={booking} driverId={driver.id} />
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <TripMap
+                      heightClassName="h-[240px]"
+                      pickup={{ lat: booking.pickupLat, lng: booking.pickupLng }}
+                      destination={{
+                        lat: booking.dropoffLat,
+                        lng: booking.dropoffLng,
+                      }}
+                    />
+                    <div className="flex justify-end">
+                      <Link href="/driver/navigate">
+                        <Button size="sm" variant="outline">
+                          Open Full Navigation
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
