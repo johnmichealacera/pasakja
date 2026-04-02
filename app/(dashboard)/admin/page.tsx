@@ -7,7 +7,6 @@ import {
   Users,
   Car,
   BookOpen,
-  DollarSign,
   Clock,
   CheckCircle,
   XCircle,
@@ -107,7 +106,9 @@ export default async function AdminDashboard() {
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">₱{totalRevenue.toFixed(0)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 opacity-70" />
+              <span className="h-8 w-8 inline-flex items-center justify-center text-green-500 opacity-70 text-2xl leading-none">
+                ₱
+              </span>
             </div>
           </CardContent>
         </Card>

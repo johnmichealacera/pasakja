@@ -85,32 +85,41 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center max-w-4xl mx-auto">
-            <Badge className="mb-4 text-sm" variant="secondary">
+            <div className="relative z-10 rounded-3xl border border-border/60 bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 px-6 py-10">
+              <Badge
+                className="mb-4 text-sm border-primary/25 bg-background/40 text-primary/90 dark:bg-background/20"
+                variant="outline"
+              >
               Serving Socorro, Surigao del Norte
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-6">
-              Your Community{" "}
-              <span className="text-primary">Ride Booking</span>{" "}
-              Platform
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Pasakja connects passengers, drivers, and administrators through a
-              smart, real-time transportation system designed for our community.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto gap-2">
-                  Book a Ride <ChevronRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/register?role=DRIVER">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2">
-                  <Car className="h-4 w-4" /> Drive with Pasakja
-                </Button>
-              </Link>
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-6">
+                Your Community{" "}
+                <span className="text-primary">Ride Booking</span>{" "}
+                Platform
+              </h1>
+              <p className="text-lg md:text-xl text-foreground/80 dark:text-foreground/75 mb-8 max-w-2xl mx-auto">
+                Pasakja connects passengers, drivers, and administrators through a
+                smart, real-time transportation system designed for our community.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/register">
+                  <Button size="lg" className="w-full sm:w-auto gap-2">
+                    Book a Ride <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/register?role=DRIVER">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto gap-2 border-primary/30 text-foreground/90 hover:bg-primary/10"
+                  >
+                    <Car className="h-4 w-4" /> Drive with Pasakja
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

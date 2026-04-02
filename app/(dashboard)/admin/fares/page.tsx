@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, DollarSign } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { AddZoneForm } from "@/components/admin/add-zone-form";
 
 export default async function AdminFaresPage() {
@@ -48,7 +48,7 @@ export default async function AdminFaresPage() {
                       {zone.fares.length > 0 && (
                         <div className="mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />
+                            <span className="text-sm leading-none">₱</span>
                             Base fare: ₱{Number(zone.fares[0].baseFare).toFixed(2)} · ₱{Number(zone.fares[0].perKmRate).toFixed(2)}/km
                           </span>
                         </div>

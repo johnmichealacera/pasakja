@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, DollarSign, TrendingUp, Users, Car, Star } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Car, Star } from "lucide-react";
 import { startOfMonth, subMonths, format } from "date-fns";
 
 export default async function AdminReportsPage() {
@@ -81,7 +81,9 @@ export default async function AdminReportsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <span className="h-4 w-4 inline-flex items-center justify-center text-green-500 text-base leading-none">
+                ₱
+              </span>
               <p className="text-xs text-muted-foreground">This Month Revenue</p>
             </div>
             <p className="text-2xl font-bold">₱{thisMonthRev.toFixed(0)}</p>

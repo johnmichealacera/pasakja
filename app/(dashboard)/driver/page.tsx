@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
-  DollarSign,
   Star,
   CheckCircle,
   Clock,
@@ -105,7 +104,9 @@ export default async function DriverDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <DollarSign className="h-6 w-6 mx-auto text-green-500 mb-1" />
+            <span className="mx-auto mb-1 inline-flex h-6 w-6 items-center justify-center text-green-500 text-xl leading-none">
+              ₱
+            </span>
             <p className="text-xl font-bold">₱{Number(driver.totalEarnings).toFixed(0)}</p>
             <p className="text-xs text-muted-foreground">Total Earned</p>
           </CardContent>

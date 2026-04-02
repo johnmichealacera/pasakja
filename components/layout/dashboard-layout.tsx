@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -28,7 +29,6 @@ import {
   History,
   AlertCircle,
   List,
-  DollarSign,
   Navigation,
   BookOpen,
   Users,
@@ -64,7 +64,7 @@ const ROLE_NAV_ITEMS: Record<
       { label: "Dashboard", href: "/driver", icon: LayoutDashboard },
       { label: "Booking Requests", href: "/driver/bookings", icon: List },
       { label: "Navigation", href: "/driver/navigate", icon: Navigation },
-      { label: "My Earnings", href: "/driver/earnings", icon: DollarSign },
+      { label: "My Earnings", href: "/driver/earnings", icon: PesoIcon },
       { label: "Profile", href: "/driver/profile", icon: User },
     ],
   },
@@ -81,6 +81,19 @@ const ROLE_NAV_ITEMS: Record<
     ],
   },
 };
+
+function PesoIcon({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center leading-none",
+        className
+      )}
+    >
+      ₱
+    </span>
+  );
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -236,25 +249,32 @@ export function DashboardLayout({
               }
             />
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>
-                <p className="font-medium">{session?.user?.name}</p>
-                <p className="text-xs text-muted-foreground font-normal">{session?.user?.email}</p>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                render={
-                  <Link href={`/${role}/profile`} className="cursor-pointer flex items-center">
-                    <User className="h-4 w-4 mr-2" /> Profile
-                  </Link>
-                }
-              />
-              <Separator className="my-1" />
-              <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="text-destructive cursor-pointer"
-              >
-                <LogOut className="h-4 w-4 mr-2" /> Sign Out
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <p className="font-medium">{session?.user?.name}</p>
+                  <p className="text-xs text-muted-foreground font-normal">
+                    {session?.user?.email}
+                  </p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  render={
+                    <Link
+                      href={`/${role}/profile`}
+                      className="cursor-pointer flex items-center"
+                    >
+                      <User className="h-4 w-4 mr-2" /> Profile
+                    </Link>
+                  }
+                />
+                <Separator className="my-1" />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-destructive cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

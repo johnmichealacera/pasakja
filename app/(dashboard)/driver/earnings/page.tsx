@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Calendar, CheckCircle } from "lucide-react";
+import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 
 export default async function DriverEarningsPage() {
@@ -52,7 +52,9 @@ export default async function DriverEarningsPage() {
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-500" />
+                <span className="h-6 w-6 inline-flex items-center justify-center text-green-500 text-xl leading-none">
+                  ₱
+                </span>
               </div>
               <div>
                 <p className="text-muted-foreground text-sm">Total Earnings</p>
@@ -97,7 +99,9 @@ export default async function DriverEarningsPage() {
         <CardContent>
           {driver.earnings.length === 0 ? (
             <div className="text-center py-8">
-              <DollarSign className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <span className="h-10 w-10 mx-auto inline-flex items-center justify-center text-muted-foreground mb-3 text-2xl leading-none">
+                ₱
+              </span>
               <p className="text-muted-foreground">No earnings yet.</p>
               <p className="text-xs text-muted-foreground">
                 Complete trips to start earning.
@@ -112,7 +116,9 @@ export default async function DriverEarningsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <DollarSign className="h-4 w-4 text-green-500" />
+                      <span className="h-4 w-4 inline-flex items-center justify-center text-green-500 text-lg leading-none">
+                        ₱
+                      </span>
                     </div>
                     <div>
                       <p className="text-sm font-medium">Trip Completed</p>
