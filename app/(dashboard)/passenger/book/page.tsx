@@ -32,6 +32,7 @@ export default function BookRidePage() {
   });
   const [fareEstimate, setFareEstimate] = useState<FareEstimate | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const estimateAbort = useRef<AbortController | null>(null);
 
   const handleMapChange = useCallback((v: MapPickerValue) => {
@@ -49,6 +50,7 @@ export default function BookRidePage() {
   useEffect(() => {
     if (!picked.pickup || !picked.destination) {
       setFareEstimate(null);
+      setEstimateError(null);
       return;
     }
 
@@ -56,35 +58,61 @@ export default function BookRidePage() {
     const ctrl = new AbortController();
     estimateAbort.current = ctrl;
     setEstimateLoading(true);
+    setEstimateError(null);
 
     const { pickup, destination } = picked;
     const routeUrl = `/api/maps/route?fromLat=${pickup.lat}&fromLng=${pickup.lng}&toLat=${destination.lat}&toLng=${destination.lng}`;
 
     fetch(routeUrl, { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((routeData: { distanceKm?: number }) => {
+      .then(async (routeRes) => {
+        const routeData = (await routeRes.json()) as {
+          distanceKm?: number;
+          error?: string;
+        };
+        if (ctrl.signal.aborted) return;
+
+        if (!routeRes.ok) {
+          setFareEstimate(null);
+          setEstimateError(routeData.error ?? "Failed to fetch route");
+          return;
+        }
+
         const km = routeData.distanceKm ?? 0;
         if (km <= 0) {
           setFareEstimate(null);
-          setEstimateLoading(false);
+          setEstimateError(
+            "Unable to determine route distance. Try adjusting your pickup or destination."
+          );
           return;
         }
-        return fetch(`/api/fares/estimate?distanceKm=${km}`, {
+
+        const fareRes = await fetch(`/api/fares/estimate?distanceKm=${km}`, {
           signal: ctrl.signal,
-        })
-          .then((r) => r.json())
-          .then((est: { estimatedFare?: number; centavos?: number }) => {
-            setFareEstimate({
-              estimatedFare: est.estimatedFare ?? 0,
-              centavos: est.centavos ?? 0,
-              distanceKm: km,
-            });
-          });
+        });
+        const est = (await fareRes.json()) as {
+          estimatedFare?: number;
+          centavos?: number;
+          error?: string;
+        };
+        if (ctrl.signal.aborted) return;
+
+        if (!fareRes.ok) {
+          setFareEstimate(null);
+          setEstimateError(est.error ?? "Could not estimate fare.");
+          return;
+        }
+
+        setEstimateError(null);
+        setFareEstimate({
+          estimatedFare: est.estimatedFare ?? 0,
+          centavos: est.centavos ?? 0,
+          distanceKm: km,
+        });
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && err.name !== "AbortError") {
-          setFareEstimate(null);
-        }
+        if (err instanceof Error && err.name === "AbortError") return;
+        setFareEstimate(null);
+        setEstimateError("Failed to fetch route");
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setEstimateLoading(false);
@@ -160,6 +188,10 @@ export default function BookRidePage() {
   }
 
   async function handleGcashCheckout(pickupAddress: string, dropoffAddress: string) {
+    if (estimateError) {
+      toast.error(estimateError);
+      return;
+    }
     if (!fareEstimate || fareEstimate.centavos < 2000) {
       toast.error("Could not calculate fare. Please try again.");
       return;
@@ -213,7 +245,8 @@ export default function BookRidePage() {
   const canSubmit =
     picked.pickup &&
     picked.destination &&
-    (paymentMethod === "CASH" || (fareEstimate && fareEstimate.centavos >= 2000));
+    (paymentMethod === "CASH" ||
+      (!estimateError && fareEstimate && fareEstimate.centavos >= 2000));
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -335,11 +368,18 @@ export default function BookRidePage() {
                 <span className="font-semibold">
                   ₱{fareEstimate.estimatedFare.toFixed(2)}
                 </span>
+              ) : estimateError ? (
+                <span className="text-muted-foreground text-xs">—</span>
               ) : (
                 <span className="text-muted-foreground text-xs">Set pickup & destination</span>
               )}
             </div>
-            {fareEstimate && (
+            {estimateError && (
+              <p className="text-sm text-destructive mt-2" role="alert">
+                {estimateError}
+              </p>
+            )}
+            {fareEstimate && !estimateError && (
               <p className="text-xs text-muted-foreground mt-1">
                 ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
                 {paymentMethod === "ONLINE"

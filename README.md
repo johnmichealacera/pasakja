@@ -26,7 +26,9 @@ Pasakja connects **passengers**, **drivers**, and **administrators** through a c
 
 ### Passenger
 - Register & login
-- Book rides with pickup and drop-off address
+- Book rides with map-based pickup and destination (routing via OSRM)
+- Pay with **cash** or **GCash** (online): GCash uses [PayMongo](https://www.paymongo.com/) in **test mode** by default (no real money)
+- Estimated fare from zone rates + route distance before you confirm
 - Real-time trip status tracking
 - View trip history & rate drivers
 - SOS emergency alert button
@@ -64,7 +66,7 @@ npm install
 
 # Copy environment variables
 cp .env.example .env
-# Edit .env with your DATABASE_URL and NEXTAUTH_SECRET
+# Edit .env with your DATABASE_URL, NEXTAUTH_SECRET, and (for GCash) PayMongo keys
 
 # Generate Prisma client
 npm run db:generate
@@ -101,7 +103,7 @@ pasakja/
 │   │   ├── passenger/   # Passenger portal
 │   │   ├── driver/      # Driver portal
 │   │   └── admin/       # Admin panel
-│   ├── api/             # API routes
+│   ├── api/             # API routes (includes `paymongo/*`, `fares/estimate`, `maps/*`)
 │   └── page.tsx         # Landing page
 ├── components/
 │   ├── ui/              # shadcn/ui components
@@ -110,6 +112,7 @@ pasakja/
 │   └── driver/          # Driver-specific components
 ├── lib/
 │   ├── prisma.ts        # Prisma client
+│   ├── paymongo.ts      # PayMongo API helper (server-side)
 │   └── auth.ts          # Auth re-exports
 ├── prisma/
 │   ├── schema.prisma    # Database schema
@@ -126,7 +129,7 @@ Key tables:
 - **User** - base user (Passenger/Driver/Admin)
 - **Passenger** - passenger profile
 - **Driver** - driver profile with vehicle details
-- **Booking** - ride booking record
+- **Booking** - ride booking record (`paymentMethod` CASH/ONLINE, `paymentStatus`, optional `paymongoPaymentIntentId`, `quotedFare`)
 - **Trip** - trip timing and distance
 - **Rating** - passenger ratings for drivers
 - **Earning** - driver earnings records
@@ -142,7 +145,44 @@ Key tables:
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
 NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
+
+# PayMongo (GCash) — from https://dashboard.paymongo.com/developers
+PAYMONGO_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY="pk_test_..."
+# Optional locally: webhook signing secret if you register a webhook URL
+PAYMONGO_WEBHOOK_SECRET=""
 ```
+
+---
+
+## GCash payments (PayMongo)
+
+Online payments use **PayMongo** with **`payment_method_allowed: gcash`** only. Amounts are in **PHP** (centavos on the API; minimum charge follows PayMongo’s current rules, typically **₱20.00** minimum).
+
+### How the flow works
+
+1. Passenger selects **GCash**, sets pickup and destination, and sees a **server-calculated** estimated fare (`/api/maps/route` for distance, `/api/fares/estimate` for fare).
+2. **`POST /api/paymongo/checkout`** creates a booking (`paymentMethod: ONLINE`, `paymentStatus: UNPAID`) and a PayMongo **Payment Intent**, then stores `paymongoPaymentIntentId`.
+3. **`POST /api/paymongo/attach`** creates a GCash payment method, attaches it with a `return_url`, and returns the **redirect URL** to the GCash / PayMongo test checkout.
+4. After payment, the user lands on **`/passenger/payment/return`**, which polls **`GET /api/paymongo/status`** until the Payment Intent is **succeeded**, then marks the booking **PAID** (same update can arrive via webhook).
+
+### Testing in PayMongo test mode (recommended for capstone)
+
+Test mode uses **`sk_test_` / `pk_test_` keys**. **No real money** leaves a GCash wallet.
+
+1. Add your PayMongo **test** keys to `.env` (see above).
+2. Run `npm run dev` and sign in as **passenger** (e.g. `passenger@demo.com` / `demo123` after seed).
+3. Open **Book a ride**, set pickup and destination on the map, choose **GCash**, confirm the **estimated fare** appears.
+4. Click **Pay with GCash & Book** — you should be redirected to PayMongo’s **test** GCash experience and then back to **`/passenger/payment/return`**.
+5. Verify the booking under **My trips** and that payment completed as expected.
+
+**Webhooks (optional locally):** The return page + status poll can mark a booking **PAID** without webhooks. For production-like behavior, expose your app with HTTPS (e.g. ngrok), register **`POST /api/paymongo/webhook`** in the PayMongo dashboard for **`payment.paid`**, and set **`PAYMONGO_WEBHOOK_SECRET`** to the webhook’s secret so signatures are verified.
+
+### Testing with a real GCash account
+
+- **Test keys (`sk_test_` / `pk_test_`):** PayMongo runs in **test mode**. Flows are simulated; you do **not** pay with real GCash balance in the way production does.
+- **Real GCash charges** require PayMongo **live mode**: **`sk_live_` / `pk_live_`**, a **fully onboarded** PayMongo merchant account (KYC / compliance as PayMongo requires), and pointing your app’s env vars to **live** keys. Transactions then use **real money** and real fees—only do this when you intentionally go live, not for routine class demos.
+- For a capstone demo, **stay on test keys** and document that production would switch to live keys after merchant approval.
 
 ---
 
