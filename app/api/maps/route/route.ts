@@ -47,17 +47,21 @@ export async function GET(req: NextRequest) {
     const data = (await res.json()) as {
       routes?: Array<{
         geometry?: { coordinates?: Array<[number, number]> };
+        distance?: number;
+        duration?: number;
       }>;
     };
 
-    const coords = data.routes?.[0]?.geometry?.coordinates;
+    const route = data.routes?.[0];
+    const coords = route?.geometry?.coordinates;
     if (!coords?.length) {
-      return NextResponse.json({ polyline: [] as LatLng[] });
+      return NextResponse.json({ polyline: [] as LatLng[], distanceKm: 0 });
     }
 
     const polyline: LatLng[] = coords.map(([lon, lat]) => ({ lat, lng: lon }));
+    const distanceKm = Math.round(((route?.distance ?? 0) / 1000) * 100) / 100;
 
-    return NextResponse.json({ polyline });
+    return NextResponse.json({ polyline, distanceKm });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch route" },

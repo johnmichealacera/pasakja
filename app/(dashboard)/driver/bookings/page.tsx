@@ -94,7 +94,7 @@ export default async function DriverBookingsPage() {
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">
-                            <CreditCard className="h-3 w-3" /> Online
+                            <CreditCard className="h-3 w-3" /> GCash
                           </span>
                         )}
                         {booking.passenger.user.phone && (
@@ -173,7 +173,7 @@ export default async function DriverBookingsPage() {
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">
-                            <CreditCard className="h-3 w-3" /> Online Pay
+                            <CreditCard className="h-3 w-3" /> GCash
                           </span>
                         )}
                       </div>

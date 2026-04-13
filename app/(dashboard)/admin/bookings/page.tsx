@@ -81,7 +81,7 @@ export default async function AdminBookingsPage() {
                         {booking.paymentMethod === "CASH" ? (
                           <><Banknote className="h-3 w-3" /> Cash</>
                         ) : (
-                          <><CreditCard className="h-3 w-3" /> Online</>
+                          <><CreditCard className="h-3 w-3" /> GCash</>
                         )}
                       </span>
                       <p className="text-xs text-muted-foreground">

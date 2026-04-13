@@ -134,8 +134,10 @@ model Booking {
   dropoffAddress String
   status         BookingStatus @default(PENDING)
   fare           Decimal?      @db.Decimal(10, 2)
+  quotedFare     Decimal?      @db.Decimal(10, 2)
   paymentMethod  PaymentMethod @default(CASH)
   paymentStatus  PaymentStatus @default(UNPAID)
+  paymongoPaymentIntentId String?
   isShared       Boolean       @default(false)
   notes          String?
   createdAt      DateTime      @default(now())

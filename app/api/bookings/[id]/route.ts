@@ -72,9 +72,15 @@ export async function PATCH(
           where: { id: driver.id },
           data: { totalEarnings: { increment: fare } },
         });
+        const paymentStatus =
+          booking.paymentMethod === "CASH"
+            ? "PAID"
+            : booking.paymentStatus === "PAID"
+              ? "PAID"
+              : "UNPAID";
         const updated = await prisma.booking.update({
           where: { id },
-          data: { status: "COMPLETED", fare, paymentStatus: booking.paymentMethod === "CASH" ? "PAID" : "UNPAID" },
+          data: { status: "COMPLETED", fare, paymentStatus },
         });
         return NextResponse.json({ booking: updated });
       }
