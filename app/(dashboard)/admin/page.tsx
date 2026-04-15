@@ -77,7 +77,9 @@ export default async function AdminDashboard() {
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                   <span className="text-sm font-medium">{sosAlerts} unresolved SOS alert{sosAlerts > 1 ? "s" : ""}</span>
                 </div>
-                <Badge variant="destructive">Urgent</Badge>
+                <Link href="/admin/sos">
+                  <Button size="sm" variant="destructive">View Alerts</Button>
+                </Link>
               </CardContent>
             </Card>
           )}

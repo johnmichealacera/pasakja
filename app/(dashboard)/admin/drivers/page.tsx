@@ -99,7 +99,9 @@ export default async function AdminDriversPage() {
                       </p>
                     </div>
                   </div>
-                  <DriverVerificationActions driver={driver} />
+                  <DriverVerificationActions
+                    driver={{ id: driver.id, status: driver.status }}
+                  />
                 </div>
               </CardContent>
             </Card>

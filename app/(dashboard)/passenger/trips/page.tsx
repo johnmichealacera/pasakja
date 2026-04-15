@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 
-
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MapPin, Clock, CheckCircle, XCircle, Star, PlusCircle, Car } from "lucide-react";
 import { format } from "date-fns";
+import { TripsClient } from "./trips-client";
 
 const statusConfig = {
   PENDING: { label: "Pending", variant: "secondary" as const, icon: Clock },
@@ -116,14 +116,20 @@ export default async function TripsPage() {
                           <Star className="h-3 w-3 fill-current" />
                           <span className="text-xs font-medium">{booking.rating.score}/5</span>
                         </div>
-                      ) : booking.status === "COMPLETED" ? (
-                        <Badge variant="outline" className="text-xs">Rate trip</Badge>
                       ) : null}
                       <p className="text-xs text-muted-foreground">
                         {format(new Date(booking.createdAt), "MMM d, h:mm a")}
                       </p>
                     </div>
                   </div>
+
+                  <TripsClient
+                    bookingId={booking.id}
+                    status={booking.status}
+                    hasRating={!!booking.rating}
+                    pickup={{ lat: booking.pickupLat, lng: booking.pickupLng }}
+                    destination={{ lat: booking.dropoffLat, lng: booking.dropoffLng }}
+                  />
                 </CardContent>
               </Card>
             );

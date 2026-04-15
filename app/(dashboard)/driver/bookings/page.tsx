@@ -7,8 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Users, Banknote, CreditCard } from "lucide-react";
 import { BookingActions } from "@/components/driver/booking-actions";
+import { BookingsRefresher } from "@/components/driver/bookings-refresher";
 import Link from "next/link";
 import { TripMap } from "@/components/maps/trip-map";
+
+function bookingActionsPayload(booking: {
+  id: string;
+  status: string;
+  fare: { toString(): string } | number | string | null;
+  quotedFare: { toString(): string } | number | string | null;
+}) {
+  return {
+    id: booking.id,
+    status: booking.status,
+    fare: booking.fare == null ? null : Number(booking.fare),
+    quotedFare: booking.quotedFare == null ? null : Number(booking.quotedFare),
+  };
+}
 
 export default async function DriverBookingsPage() {
   const session = await auth();
@@ -38,11 +53,14 @@ export default async function DriverBookingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Booking Requests</h2>
-        <p className="text-muted-foreground">
-          {pendingBookings.length} available · {myBookings.length} active
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Booking Requests</h2>
+          <p className="text-muted-foreground">
+            {pendingBookings.length} available · {myBookings.length} active
+          </p>
+        </div>
+        <BookingsRefresher />
       </div>
 
       {/* Active Bookings */}
@@ -102,7 +120,10 @@ export default async function DriverBookingsPage() {
                         )}
                       </div>
                     </div>
-                    <BookingActions booking={booking} driverId={driver.id} />
+                    <BookingActions
+                      booking={bookingActionsPayload(booking)}
+                      driverId={driver.id}
+                    />
                   </div>
                   <div className="mt-4 space-y-3">
                     <TripMap
@@ -178,7 +199,11 @@ export default async function DriverBookingsPage() {
                         )}
                       </div>
                     </div>
-                    <BookingActions booking={booking} driverId={driver.id} isPending />
+                    <BookingActions
+                      booking={bookingActionsPayload(booking)}
+                      driverId={driver.id}
+                      isPending
+                    />
                   </div>
                 </CardContent>
               </Card>

@@ -10,6 +10,8 @@ interface BookingActionsProps {
   booking: {
     id: string;
     status: string;
+    fare?: number | string | null;
+    quotedFare?: number | string | null;
   };
   driverId: string;
   isPending?: boolean;
@@ -93,10 +95,12 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
   }
 
   if (booking.status === "IN_PROGRESS") {
+    const completeFare =
+      Number(booking.fare) || Number(booking.quotedFare) || 50;
     return (
       <Button
         size="sm"
-        onClick={() => updateStatus("COMPLETED", { fare: 50 })}
+        onClick={() => updateStatus("COMPLETED", { fare: completeFare })}
         disabled={isLoading}
         className="gap-1.5 bg-green-600 hover:bg-green-700"
       >
