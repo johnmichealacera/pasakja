@@ -15,6 +15,12 @@ export type MapPickerValue = {
   destination: LatLng | null;
 };
 
+const SOCORRO_CENTER: LatLng = { lat: 9.6234, lng: 125.9685 };
+const SOCORRO_BOUNDS: [[number, number], [number, number]] = [
+  [9.52, 125.87],
+  [9.72, 126.07],
+];
+
 export function MapPicker({
   heightClassName = "h-[420px]",
   initialCenter,
@@ -35,13 +41,15 @@ export function MapPicker({
   const [pickup, setPickup] = useState<LatLng | null>(null);
   const [destination, setDestination] = useState<LatLng | null>(null);
   const [route, setRoute] = useState<LatLng[] | null>(null);
+  const [snapping, setSnapping] = useState(false);
+  const [snapError, setSnapError] = useState<string | null>(null);
   const lastEmittedRef = useRef<MapPickerValue>({
     pickup: null,
     destination: null,
   });
 
   const center = useMemo<LatLng>(() => {
-    return initialCenter ?? pickup ?? destination ?? { lat: 9.6234, lng: 125.9685 };
+    return initialCenter ?? pickup ?? destination ?? SOCORRO_CENTER;
   }, [destination, initialCenter, pickup]);
 
   useEffect(() => {
@@ -64,7 +72,7 @@ export function MapPicker({
     onChangeRef.current?.(next);
   }, [destination, pickup]);
 
-  // GPS: set pickup from current location (once).
+  // GPS: set pickup from current location (once), snapped to road.
   useEffect(() => {
     let cancelled = false;
 
@@ -73,15 +81,19 @@ export function MapPicker({
       if (pickup) return;
 
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           if (cancelled) return;
-          setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          const snapped = await snapToRoad(pos.coords.latitude, pos.coords.longitude);
+          if (cancelled) return;
+          if (snapped) {
+            setPickup(snapped);
+          } else {
+            setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          }
           gpsAppliedRef.current = true;
           setPickMode("destination");
         },
-        () => {
-          // Ignore GPS errors; user can still manually pick on the map.
-        },
+        () => {},
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 10_000 }
       );
     }
@@ -118,7 +130,10 @@ export function MapPicker({
       const map = L.map(mapElRef.current as HTMLDivElement, {
         zoomControl: true,
         scrollWheelZoom: true,
-      }).setView([center.lat, center.lng], 13);
+        maxBounds: L.latLngBounds(SOCORRO_BOUNDS[0], SOCORRO_BOUNDS[1]),
+        maxBoundsViscosity: 1.0,
+        minZoom: 12,
+      }).setView([center.lat, center.lng], 14);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
@@ -130,8 +145,7 @@ export function MapPicker({
           lat: e.latlng.lat,
           lng: e.latlng.lng,
         };
-        if (pickModeRef.current === "pickup") setPickup(clicked);
-        else setDestination(clicked);
+        handleMapClick(clicked);
       });
 
       mapRef.current = map;
@@ -155,8 +169,43 @@ export function MapPicker({
   // Update map view when center changes initially (avoid jitter after selection).
   useEffect(() => {
     if (!mapRef.current) return;
-    if (!pickup && !destination) mapRef.current.setView([center.lat, center.lng], 13);
+    if (!pickup && !destination) mapRef.current.setView([center.lat, center.lng], 14);
   }, [center, destination, pickup]);
+
+  async function snapToRoad(lat: number, lng: number): Promise<LatLng | null> {
+    try {
+      const res = await fetch(`/api/maps/nearest?lat=${lat}&lng=${lng}`);
+      if (!res.ok) return null;
+      const data = (await res.json()) as { lat: number; lng: number };
+      return { lat: data.lat, lng: data.lng };
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleMapClick(clicked: LatLng) {
+    setSnapping(true);
+    setSnapError(null);
+
+    try {
+      const res = await fetch(`/api/maps/nearest?lat=${clicked.lat}&lng=${clicked.lng}`);
+      const data = (await res.json()) as { lat?: number; lng?: number; error?: string };
+
+      if (!res.ok || !data.lat || !data.lng) {
+        setSnapError(data.error ?? "No road found at this location");
+        return;
+      }
+
+      const snapped: LatLng = { lat: data.lat, lng: data.lng };
+      if (pickModeRef.current === "pickup") setPickup(snapped);
+      else setDestination(snapped);
+      setSnapError(null);
+    } catch {
+      setSnapError("Could not verify road location. Try again.");
+    } finally {
+      setSnapping(false);
+    }
+  }
 
   // Draw markers + polyline.
   useEffect(() => {
@@ -165,7 +214,6 @@ export function MapPicker({
     const L = leafletModuleRef.current;
     if (!L) return;
 
-    // Keep layer references on the map instance.
     const anyMap = map as unknown as {
       __pasakja_pickup?: L.Layer;
       __pasakja_destination?: L.Layer;
@@ -204,7 +252,6 @@ export function MapPicker({
     }
 
     if (pickup && destination) {
-      // Straight line preview.
       const line = L.polyline(
         [
           [pickup.lat, pickup.lng],
@@ -214,7 +261,6 @@ export function MapPicker({
       ).addTo(map);
       anyMap.__pasakja_straight_line = line;
 
-      // Route line (best effort).
       const controller = new AbortController();
       const run = async () => {
         try {
@@ -275,9 +321,20 @@ export function MapPicker({
         >
           Click to set Destination
         </Badge>
+        {snapping && (
+          <span className="text-xs text-muted-foreground animate-pulse">
+            Snapping to road...
+          </span>
+        )}
       </div>
 
       <div ref={mapElRef} className={cn("rounded-2xl border bg-card", heightClassName)} />
+
+      {snapError && (
+        <p className="text-sm text-destructive" role="alert">
+          {snapError}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2 text-xs">
         <div className="px-3 py-1 rounded-full border bg-background/50">
@@ -292,4 +349,3 @@ export function MapPicker({
     </div>
   );
 }
-

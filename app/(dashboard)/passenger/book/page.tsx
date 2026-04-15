@@ -249,159 +249,169 @@ export default function BookRidePage() {
       (!estimateError && fareEstimate && fareEstimate.centavos >= 2000));
 
   return (
-    <div className="max-w-lg mx-auto space-y-6">
+    <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Book a Ride</h2>
         <p className="text-muted-foreground">Enter your trip details below</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Trip Details</CardTitle>
-            <CardDescription>Where are you going?</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                Select your route on the map
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Pickup is taken from GPS. Click the map to set your destination.
-              </p>
+        {/* Two-column layout on desktop: map left, controls right */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* Map — takes 3/5 on desktop */}
+          <Card className="lg:col-span-3">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Trip Details</CardTitle>
+              <CardDescription>Where are you going?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  Select your route on the map
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Pickup is taken from GPS. Click the map to set your destination.
+                </p>
 
-              <MapPicker
-                onChange={handleMapChange}
-                heightClassName="h-[360px]"
-              />
-            </div>
+                <MapPicker
+                  onChange={handleMapChange}
+                  heightClassName="h-[360px] lg:h-[520px]"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-muted-foreground">
-                Special Instructions (optional)
-              </label>
-              <Textarea
-                id="notes"
-                placeholder="Any special notes for the driver..."
-                value={form.notes}
-                onChange={handleNotesChange}
-                rows={2}
-                disabled={isLoading}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          {/* Controls — takes 2/5 on desktop */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Notes */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Special Instructions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  id="notes"
+                  placeholder="Any special notes for the driver..."
+                  value={form.notes}
+                  onChange={handleNotesChange}
+                  rows={2}
+                  disabled={isLoading}
+                />
+              </CardContent>
+            </Card>
 
-        {/* Payment Method */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Payment Method</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {([
-                { value: "CASH" as const, label: "Cash", icon: Banknote },
-                { value: "ONLINE" as const, label: "GCash", icon: Smartphone },
-              ]).map(({ value, label, icon: Icon }) => (
+            {/* Payment Method */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    { value: "CASH" as const, label: "Cash", icon: Banknote },
+                    { value: "ONLINE" as const, label: "GCash", icon: Smartphone },
+                  ]).map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setPaymentMethod(value)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                        paymentMethod === value
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-sm font-medium">{label}</span>
+                      {paymentMethod === value && (
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {paymentMethod === "ONLINE" && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    You will be redirected to GCash to complete payment before the ride is confirmed.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Shared Ride */}
+            <Card>
+              <CardContent className="p-4">
                 <button
-                  key={value}
                   type="button"
-                  onClick={() => setPaymentMethod(value)}
+                  onClick={() => setIsShared(!isShared)}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                    paymentMethod === value
-                      ? "border-primary bg-primary/5 text-primary"
+                    "w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all",
+                    isShared
+                      ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{label}</span>
-                  {paymentMethod === value && (
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                  )}
+                  <div className="flex items-center gap-3">
+                    <Users className={cn("h-5 w-5", isShared ? "text-primary" : "text-muted-foreground")} />
+                    <div className="text-left">
+                      <p className="text-sm font-medium">Shared Ride</p>
+                      <p className="text-xs text-muted-foreground">
+                        Share the ride with others going the same way
+                      </p>
+                    </div>
+                  </div>
+                  {isShared && <Badge className="text-xs">Selected</Badge>}
                 </button>
-              ))}
-            </div>
-            {paymentMethod === "ONLINE" && (
-              <p className="text-xs text-muted-foreground mt-3">
-                You will be redirected to GCash to complete payment before the ride is confirmed.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Shared Ride */}
-        <Card>
-          <CardContent className="p-4">
-            <button
-              type="button"
-              onClick={() => setIsShared(!isShared)}
-              className={cn(
-                "w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all",
-                isShared
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Users className={cn("h-5 w-5", isShared ? "text-primary" : "text-muted-foreground")} />
-                <div className="text-left">
-                  <p className="text-sm font-medium">Shared Ride</p>
-                  <p className="text-xs text-muted-foreground">
-                    Share the ride with others going the same way
-                  </p>
+            {/* Fare estimate */}
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Estimated Fare</span>
+                  {estimateLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : fareEstimate ? (
+                    <span className="font-semibold">
+                      ₱{fareEstimate.estimatedFare.toFixed(2)}
+                    </span>
+                  ) : estimateError ? (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">Set pickup & destination</span>
+                  )}
                 </div>
-              </div>
-              {isShared && <Badge className="text-xs">Selected</Badge>}
-            </button>
-          </CardContent>
-        </Card>
+                {estimateError && (
+                  <p className="text-sm text-destructive mt-2" role="alert">
+                    {estimateError}
+                  </p>
+                )}
+                {fareEstimate && !estimateError && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
+                    {paymentMethod === "ONLINE"
+                      ? "Charged via GCash before ride"
+                      : "Pay cash to driver after ride"}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Fare estimate */}
-        <Card className="bg-muted/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Estimated Fare</span>
-              {estimateLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : fareEstimate ? (
-                <span className="font-semibold">
-                  ₱{fareEstimate.estimatedFare.toFixed(2)}
-                </span>
-              ) : estimateError ? (
-                <span className="text-muted-foreground text-xs">—</span>
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading || !canSubmit}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {paymentMethod === "ONLINE" ? "Processing..." : "Booking..."}
+                </>
+              ) : paymentMethod === "ONLINE" ? (
+                "Pay with GCash & Book"
               ) : (
-                <span className="text-muted-foreground text-xs">Set pickup & destination</span>
+                "Confirm Booking"
               )}
-            </div>
-            {estimateError && (
-              <p className="text-sm text-destructive mt-2" role="alert">
-                {estimateError}
-              </p>
-            )}
-            {fareEstimate && !estimateError && (
-              <p className="text-xs text-muted-foreground mt-1">
-                ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
-                {paymentMethod === "ONLINE"
-                  ? "Charged via GCash before ride"
-                  : "Pay cash to driver after ride"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Button type="submit" className="w-full" size="lg" disabled={isLoading || !canSubmit}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {paymentMethod === "ONLINE" ? "Processing..." : "Booking..."}
-            </>
-          ) : paymentMethod === "ONLINE" ? (
-            "Pay with GCash & Book"
-          ) : (
-            "Confirm Booking"
-          )}
-        </Button>
+            </Button>
+          </div>
+        </div>
       </form>
     </div>
   );
