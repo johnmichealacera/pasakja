@@ -25,30 +25,40 @@ Pasakja connects **passengers**, **drivers**, and **administrators** through a c
 ## Features
 
 ### Passenger
-- Register & login
-- Book rides with map-based pickup and destination (routing via OSRM)
-- Pay with **cash** or **GCash** (online): GCash uses [PayMongo](https://www.paymongo.com/) in **test mode** by default (no real money)
-- Estimated fare from zone rates + route distance before you confirm
+- Register & login with role-based access
+- **Map-based ride booking** with interactive Leaflet map (OpenStreetMap tiles)
+  - GPS auto-pickup from device location
+  - Click-to-set destination on map
+  - **Road snapping** — pins snap to the nearest road via OSRM `/nearest`; clicks on mountains or areas without roads are rejected with a message
+  - **Map bounds** locked to Socorro, Surigao del Norte (cannot pan to other areas)
+  - Route polyline drawn on map between pickup and destination
+- **Dynamic fare estimate** calculated server-side from route distance (OSRM) + admin-configured zone rates (base fare + per-km rate)
+- **Two payment methods:**
+  - **Cash** — pay the driver after the ride
+  - **GCash** (online) — pre-pay at booking via [PayMongo](https://www.paymongo.com/) Payment Intent + GCash redirect; uses **test mode** by default (no real money)
+- **Shared ride option** — toggle to share the ride with others going the same direction
 - Real-time trip status tracking
 - View trip history & rate drivers
-- SOS emergency alert button
-- Shared ride option
+- **SOS emergency alert** — sends real-time GPS coordinates to administrators; shows GPS status, emergency contacts (PNP, BFP, NDRRMC), and confirms when alert is sent
+- Responsive layout: two-column on desktop (large map + controls sidebar), single column on mobile
 
 ### Driver
-- Register with vehicle details
+- Register with vehicle details (license, plate, model)
 - Toggle online/offline availability
 - View and accept nearby booking requests
 - Update trip status (Accepted → Picked Up → In Progress → Completed)
+- Mini-map on active trip cards with link to full navigation view
 - View earnings & trip history
-- GPS navigation guidance
+- GPS navigation guidance with route polyline
+- Payment badges showing **Cash** or **GCash** per booking
 
 ### Admin
 - Dashboard with system stats (revenue, bookings, drivers, passengers)
 - Verify or suspend driver accounts
-- View all bookings and passengers
-- Manage fare zones and rates
+- View all bookings and passengers (with payment method labels)
+- Manage fare zones and rates (base fare + per-km rate formula)
 - Reports & analytics (monthly comparisons, top drivers)
-- System settings
+- System settings (security, notifications, tech stack info)
 
 ---
 
@@ -108,6 +118,7 @@ pasakja/
 ├── components/
 │   ├── ui/              # shadcn/ui components
 │   ├── layout/          # Dashboard layout
+│   ├── maps/            # MapPicker (booking) and TripMap (driver navigation)
 │   ├── admin/           # Admin-specific components
 │   └── driver/          # Driver-specific components
 ├── lib/

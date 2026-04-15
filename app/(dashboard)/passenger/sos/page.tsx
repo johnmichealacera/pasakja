@@ -1,25 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Phone, Shield } from "lucide-react";
+import { AlertCircle, MapPin, Phone, Shield } from "lucide-react";
 import { toast } from "sonner";
+
+const FALLBACK_LAT = 9.6234;
+const FALLBACK_LNG = 125.9685;
 
 export default function SOSPage() {
   const [isTriggered, setIsTriggered] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<"acquiring" | "ready" | "failed">("acquiring");
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGpsStatus("failed");
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGpsStatus("ready");
+      },
+      () => {
+        if (!gpsCoords) setGpsStatus("failed");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   async function handleSOS() {
     setIsLoading(true);
+    const lat = gpsCoords?.lat ?? FALLBACK_LAT;
+    const lng = gpsCoords?.lng ?? FALLBACK_LNG;
+
     try {
       const res = await fetch("/api/sos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, lat: 9.6234, lng: 125.9685 }),
+        body: JSON.stringify({ message, lat, lng }),
       });
 
       if (res.ok) {
@@ -105,6 +133,30 @@ export default function SOSPage() {
                   <p className="text-xs text-muted-foreground">Philippine National Police: 117</p>
                   <p className="text-xs text-muted-foreground">BFP Emergency: 160</p>
                   <p className="text-xs text-muted-foreground">NDRRMC: 911</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-sm">Your Location</p>
+                  {gpsStatus === "acquiring" && (
+                    <p className="text-xs text-muted-foreground animate-pulse">Acquiring GPS location...</p>
+                  )}
+                  {gpsStatus === "ready" && gpsCoords && (
+                    <p className="text-xs text-green-600">
+                      GPS active: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
+                    </p>
+                  )}
+                  {gpsStatus === "failed" && (
+                    <p className="text-xs text-destructive">
+                      GPS unavailable — a default location will be sent
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
