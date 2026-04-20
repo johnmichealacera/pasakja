@@ -1,10 +1,8 @@
 import { auth } from "@/auth";
-
-
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
 import { Mail, Phone, Car, Star } from "lucide-react";
 import { format } from "date-fns";
 
@@ -55,11 +53,10 @@ export default async function DriverProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-4 mb-6">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileImageUpload
+              currentImage={userData.profileImage ?? null}
+              initials={initials}
+            />
             <div>
               <h3 className="text-xl font-semibold">{userData.name}</h3>
               <div className="flex items-center gap-2 mt-1">

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { prisma } from "@/lib/prisma";
 
 export default async function DriverLayout({
   children,
@@ -15,5 +16,15 @@ export default async function DriverLayout({
     redirect(`/${role}`);
   }
 
-  return <DashboardLayout role="driver">{children}</DashboardLayout>;
+  const user = session.user as { id: string };
+  const userData = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { profileImage: true },
+  });
+
+  return (
+    <DashboardLayout role="driver" profileImage={userData?.profileImage ?? null}>
+      {children}
+    </DashboardLayout>
+  );
 }

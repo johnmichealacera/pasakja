@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -100,6 +100,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   title?: string;
   role: "passenger" | "driver" | "admin";
+  profileImage?: string | null;
 }
 
 const roleBadgeVariant = {
@@ -153,6 +154,7 @@ export function DashboardLayout({
   children,
   title: titleProp,
   role,
+  profileImage,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -187,6 +189,7 @@ export function DashboardLayout({
         <div className="p-4 border-t">
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
+              {profileImage && <AvatarImage src={profileImage} alt="Profile" />}
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {userInitials}
               </AvatarFallback>
@@ -241,6 +244,7 @@ export function DashboardLayout({
               render={
                 <Button variant="ghost" className="gap-2">
                 <Avatar className="h-7 w-7">
+                  {profileImage && <AvatarImage src={profileImage} alt="Profile" />}
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">
                     {userInitials}
                   </AvatarFallback>

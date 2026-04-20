@@ -1,10 +1,8 @@
 import { auth } from "@/auth";
-
-
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ProfileImageUpload } from "@/components/profile-image-upload";
 import { Mail, Phone, Calendar, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
@@ -42,11 +40,10 @@ export default async function PassengerProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-4 mb-6">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileImageUpload
+              currentImage={userData.profileImage ?? null}
+              initials={initials}
+            />
             <div>
               <h3 className="text-xl font-semibold">{userData.name}</h3>
               <Badge variant="secondary">Passenger</Badge>
