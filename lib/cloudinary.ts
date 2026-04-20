@@ -1,5 +1,3 @@
-import { handleFileChange } from "@jmacera/cloudinary-image-upload";
-
 export interface CloudinaryUploadOptions {
   enableWebPOptimization?: boolean;
   showOptimizationInfo?: boolean;
@@ -87,12 +85,6 @@ export async function uploadToCloudinary(
 ): Promise<CloudinaryUploadResult> {
   const { enableWebPOptimization = true, showOptimizationInfo = false } = options;
 
-  const cloudinaryUrl = process.env.NEXT_PUBLIC_CLOUDINARY_URL || "";
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
-  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || "";
-
-  const useLocalUpload = !cloudinaryUrl || !uploadPreset || !apiKey;
-
   let optimizedFile: File | undefined;
   let optimizationInfo: CloudinaryUploadResult["optimizationInfo"];
 
@@ -119,28 +111,21 @@ export async function uploadToCloudinary(
     optimizedFile = file;
   }
 
-  let uploadedUrl: string | undefined;
+  const formData = new FormData();
+  formData.append("file", optimizedFile as File);
 
-  if (useLocalUpload) {
-    const formData = new FormData();
-    formData.append("file", optimizedFile as File);
-
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Upload failed" }));
-      throw new Error(err.error || "Failed to upload image locally");
-    }
-    const data = await res.json();
-    uploadedUrl = data.url;
-  } else {
-    uploadedUrl = await handleFileChange(cloudinaryUrl, uploadPreset, apiKey, optimizedFile);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Upload failed" }));
+    throw new Error(err.error || "Failed to upload image");
   }
+  const data = await res.json();
 
-  if (!uploadedUrl || uploadedUrl.trim() === "") {
+  if (!data.url || data.url.trim() === "") {
     throw new Error("Failed to upload image");
   }
 
-  return { url: uploadedUrl, originalFile: file, optimizedFile, optimizationInfo };
+  return { url: data.url, originalFile: file, optimizedFile, optimizationInfo };
 }
 
 export async function uploadMultipleToCloudinary(
