@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export function ProfileImageUpload({ currentImage, initials }: Props) {
   const [imageUrl, setImageUrl] = useState<string | null>(currentImage);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -34,6 +36,7 @@ export function ProfileImageUpload({ currentImage, initials }: Props) {
 
       setImageUrl(url);
       toast.success("Profile photo updated");
+      router.refresh();
     } catch {
       toast.error("Failed to upload image");
     } finally {
