@@ -96,7 +96,7 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
 
   if (booking.status === "IN_PROGRESS") {
     const completeFare =
-      Number(booking.fare) || Number(booking.quotedFare) || 50;
+      Number(booking.fare) || Number(booking.quotedFare) || 15;
     return (
       <Button
         size="sm"

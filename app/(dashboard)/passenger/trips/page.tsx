@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MapPin, Clock, CheckCircle, XCircle, Star, PlusCircle, Car } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { TripsClient } from "./trips-client";
 
@@ -99,7 +100,14 @@ export default async function TripsPage() {
                         </div>
                         {booking.driver && (
                           <div className="mt-2 flex items-center gap-2">
-                            <Car className="h-3 w-3 text-muted-foreground" />
+                            <Avatar className="h-5 w-5">
+                              {booking.driver.user.profileImage && (
+                                <AvatarImage src={booking.driver.user.profileImage} alt={booking.driver.user.name} />
+                              )}
+                              <AvatarFallback className="text-[10px]">
+                                {booking.driver.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
                             <p className="text-xs text-muted-foreground">
                               {booking.driver.user.name} · {booking.driver.vehiclePlate}
                             </p>

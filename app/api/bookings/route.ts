@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     const {
       pickupLat, pickupLng, pickupAddress,
       dropoffLat, dropoffLng, dropoffAddress,
-      paymentMethod, isShared, notes,
+      paymentMethod, isShared, notes, quotedFare,
     } = body;
 
     if (!pickupAddress || !dropoffAddress) {
@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
         paymentMethod: paymentMethod ?? "CASH",
         isShared: isShared ?? false,
         notes,
+        quotedFare: quotedFare ?? null,
         fare: null,
       },
     });

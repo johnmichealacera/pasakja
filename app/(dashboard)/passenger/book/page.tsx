@@ -175,6 +175,7 @@ export default function BookRidePage() {
         dropoffLat: picked.destination!.lat,
         dropoffLng: picked.destination!.lng,
         dropoffAddress,
+        quotedFare: fareEstimate?.estimatedFare ?? null,
       }),
     });
 
@@ -192,7 +193,7 @@ export default function BookRidePage() {
       toast.error(estimateError);
       return;
     }
-    if (!fareEstimate || fareEstimate.centavos < 2000) {
+    if (!fareEstimate || fareEstimate.centavos < 1500) {
       toast.error("Could not calculate fare. Please try again.");
       return;
     }
@@ -246,7 +247,7 @@ export default function BookRidePage() {
     picked.pickup &&
     picked.destination &&
     (paymentMethod === "CASH" ||
-      (!estimateError && fareEstimate && fareEstimate.centavos >= 2000));
+      (!estimateError && fareEstimate && fareEstimate.centavos >= 1500));
 
   return (
     <div className="space-y-6">

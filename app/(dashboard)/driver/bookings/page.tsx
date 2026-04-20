@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, Banknote, CreditCard } from "lucide-react";
+import { MapPin, Users, Banknote, CreditCard, MessageSquare } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookingActions } from "@/components/driver/booking-actions";
 import { BookingsRefresher } from "@/components/driver/bookings-refresher";
 import Link from "next/link";
@@ -86,6 +87,14 @@ export default async function DriverBookingsPage() {
                             ? "Picked Up"
                             : "In Progress"}
                         </Badge>
+                        <Avatar className="h-6 w-6">
+                          {booking.passenger.user.profileImage && (
+                            <AvatarImage src={booking.passenger.user.profileImage} alt={booking.passenger.user.name} />
+                          )}
+                          <AvatarFallback className="text-xs">
+                            {booking.passenger.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
                         <span className="text-sm font-medium">
                           {booking.passenger.user.name}
                         </span>
@@ -119,6 +128,12 @@ export default async function DriverBookingsPage() {
                           <span>📞 {booking.passenger.user.phone}</span>
                         )}
                       </div>
+                      {booking.notes && (
+                        <div className="flex items-start gap-1.5 mt-2 text-xs bg-muted/50 rounded-md px-2.5 py-1.5">
+                          <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-muted-foreground">{booking.notes}</p>
+                        </div>
+                      )}
                     </div>
                     <BookingActions
                       booking={bookingActionsPayload(booking)}
@@ -169,9 +184,19 @@ export default async function DriverBookingsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm mb-2">
-                        {booking.passenger.user.name}
-                      </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Avatar className="h-6 w-6">
+                          {booking.passenger.user.profileImage && (
+                            <AvatarImage src={booking.passenger.user.profileImage} alt={booking.passenger.user.name} />
+                          )}
+                          <AvatarFallback className="text-xs">
+                            {booking.passenger.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="font-medium text-sm">
+                          {booking.passenger.user.name}
+                        </p>
+                      </div>
                       <div className="space-y-1">
                         <div className="flex items-start gap-1.5">
                           <MapPin className="h-3 w-3 text-green-500 mt-0.5" />
@@ -198,6 +223,12 @@ export default async function DriverBookingsPage() {
                           </span>
                         )}
                       </div>
+                      {booking.notes && (
+                        <div className="flex items-start gap-1.5 mt-2 text-xs bg-muted/50 rounded-md px-2.5 py-1.5">
+                          <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-muted-foreground">{booking.notes}</p>
+                        </div>
+                      )}
                     </div>
                     <BookingActions
                       booking={bookingActionsPayload(booking)}

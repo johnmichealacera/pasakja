@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const PAYMONGO_MIN_CENTAVOS = 2000;
+const MINIMUM_FARE_PHP = 15;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -29,16 +29,12 @@ export async function GET(req: NextRequest) {
 
     const baseFare = Number(fare.baseFare);
     const perKmRate = Number(fare.perKmRate);
-    const estimatedPHP = baseFare + distanceKm * perKmRate;
-    const roundedPHP = Math.round(estimatedPHP * 100) / 100;
-    let centavos = Math.round(roundedPHP * 100);
-
-    if (centavos < PAYMONGO_MIN_CENTAVOS) {
-      centavos = PAYMONGO_MIN_CENTAVOS;
-    }
+    const rawPHP = baseFare + distanceKm * perKmRate;
+    const estimatedFare = Math.max(Math.round(rawPHP * 100) / 100, MINIMUM_FARE_PHP);
+    const centavos = Math.round(estimatedFare * 100);
 
     return NextResponse.json({
-      estimatedFare: roundedPHP,
+      estimatedFare,
       centavos,
       baseFare,
       perKmRate,

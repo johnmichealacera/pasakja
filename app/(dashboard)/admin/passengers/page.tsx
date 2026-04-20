@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, Users } from "lucide-react";
 import { format } from "date-fns";
 
@@ -42,6 +42,9 @@ export default async function AdminPassengersPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      {passenger.user.profileImage && (
+                        <AvatarImage src={passenger.user.profileImage} alt={passenger.user.name} />
+                      )}
                       <AvatarFallback className="bg-secondary text-secondary-foreground">
                         {initials}
                       </AvatarFallback>

@@ -59,7 +59,7 @@ export async function PATCH(
         if (booking.driverId !== driver.id) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-        const fare = body.fare ?? 50;
+        const fare = body.fare ?? (Number(booking.quotedFare) || 15);
         await prisma.trip.upsert({
           where: { bookingId: id },
           update: { endTime: new Date(), distance: body.distance ?? null },
