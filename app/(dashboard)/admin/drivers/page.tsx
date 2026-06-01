@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, Car, Star } from "lucide-react";
 import { DriverVerificationActions } from "@/components/admin/driver-verification-actions";
+import { DriverDocumentsViewer } from "@/components/admin/driver-documents-viewer";
 import { format } from "date-fns";
 
 export default async function AdminDriversPage() {
@@ -15,6 +16,7 @@ export default async function AdminDriversPage() {
         include: { passenger: { include: { user: { select: { name: true } } } } },
         orderBy: { createdAt: "desc" },
       },
+      documents: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -134,9 +136,15 @@ export default async function AdminDriversPage() {
                       )}
                     </div>
                   </div>
-                  <DriverVerificationActions
-                    driver={{ id: driver.id, status: driver.status }}
-                  />
+                  <div className="flex flex-col gap-2 shrink-0 items-end">
+                    <DriverVerificationActions
+                      driver={{ id: driver.id, status: driver.status }}
+                    />
+                    <DriverDocumentsViewer
+                      driverName={driver.user.name}
+                      documents={driver.documents}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

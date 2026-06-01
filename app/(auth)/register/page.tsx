@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Car, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentUploadRegistration, type PendingDoc } from "@/components/driver/document-upload-registration";
 
 function RegisterForm() {
   const router = useRouter();
@@ -19,6 +20,8 @@ function RegisterForm() {
   const [role, setRole] = useState<"PASSENGER" | "DRIVER">(defaultRole as "PASSENGER" | "DRIVER");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
+  const [uploadStatus, setUploadStatus] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -39,10 +42,27 @@ function RegisterForm() {
     setIsLoading(true);
 
     try {
+      // Upload driver documents first, at submit time
+      let uploadedDocs: { type: string; url: string; filename: string }[] = [];
+      if (role === "DRIVER" && pendingDocs.length > 0) {
+        for (let i = 0; i < pendingDocs.length; i++) {
+          const doc = pendingDocs[i];
+          setUploadStatus(`Uploading document ${i + 1} of ${pendingDocs.length}…`);
+          const formData = new FormData();
+          formData.append("file", doc.file);
+          const res = await fetch("/api/upload/driver-docs", { method: "POST", body: formData });
+          if (res.ok) {
+            const data = await res.json();
+            uploadedDocs.push({ type: doc.type, url: data.url, filename: doc.file.name });
+          }
+        }
+        setUploadStatus("");
+      }
+
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, role }),
+        body: JSON.stringify({ ...form, role, documents: uploadedDocs }),
       });
 
       const data = await res.json();
@@ -210,10 +230,16 @@ function RegisterForm() {
                       disabled={isLoading}
                     />
                   </div>
+                  <div className="border-t pt-3">
+                    <DocumentUploadRegistration
+                      onChange={setPendingDocs}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </TabsContent>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {uploadStatus || (isLoading ? "Creating account..." : "Create Account")}
                 </Button>
               </form>
             </Tabs>

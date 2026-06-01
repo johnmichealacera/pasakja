@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, phone, role, licenseNo, vehicleType, vehiclePlate, vehicleModel } = body;
+    const { name, email, password, phone, role, licenseNo, vehicleType, vehiclePlate, vehicleModel, documents } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      await prisma.driver.create({
+      const driver = await prisma.driver.create({
         data: {
           userId: user.id,
           licenseNo,
@@ -57,6 +57,24 @@ export async function POST(req: NextRequest) {
           vehicleModel,
         },
       });
+
+      // Save uploaded documents if provided
+      if (Array.isArray(documents) && documents.length > 0) {
+        const validDocs = documents.filter(
+          (d: { type?: string; url?: string; filename?: string }) =>
+            d.type && d.url && d.filename
+        );
+        if (validDocs.length > 0) {
+          await prisma.driverDocument.createMany({
+            data: validDocs.map((d: { type: string; url: string; filename: string }) => ({
+              driverId: driver.id,
+              type: d.type,
+              url: d.url,
+              filename: d.filename,
+            })),
+          });
+        }
+      }
     }
 
     return NextResponse.json(
