@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
 import { AddZoneForm } from "@/components/admin/add-zone-form";
+import { ZoneActions } from "@/components/admin/zone-actions";
 
 export default async function AdminFaresPage() {
   const zones = await prisma.zone.findMany({
@@ -34,8 +35,8 @@ export default async function AdminFaresPage() {
             zones.map((zone) => (
               <Card key={zone.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{zone.name}</p>
                         <Badge variant={zone.isActive ? "default" : "secondary"} className="text-xs">
@@ -54,6 +55,16 @@ export default async function AdminFaresPage() {
                         </div>
                       )}
                     </div>
+                    <ZoneActions
+                      zone={{
+                        ...zone,
+                        fares: zone.fares.map((f) => ({
+                          ...f,
+                          baseFare: Number(f.baseFare),
+                          perKmRate: Number(f.perKmRate),
+                        })),
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
