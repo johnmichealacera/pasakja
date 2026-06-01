@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defense Demo — Pasakja Transportation System · Socorro, Surigao del Norte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --void:#ffffff;
+  --deep:#f8fafc;
+  --ink:#0d1f3c;
+  --t90:rgba(13,31,60,0.90);
+  --t70:rgba(13,31,60,0.65);
+  --t45:rgba(13,31,60,0.40);
+  --t20:rgba(13,31,60,0.14);
+  --t08:rgba(13,31,60,0.07);
+
+  /* Role palette */
+  --admin:#7c3aed;
+  --admin-bg:#f5f3ff;
+  --admin-border:#ddd6fe;
+  --driver:#059669;
+  --driver-bg:#ecfdf5;
+  --driver-border:#a7f3d0;
+  --passenger:#2563eb;
+  --passenger-bg:#eff6ff;
+  --passenger-border:#bfdbfe;
+  --public:#6b7280;
+  --public-bg:#f9fafb;
+  --public-border:#e5e7eb;
+}
+
+html{scroll-behavior:smooth;font-size:16px;}
+body{
+  font-family:'Inter',sans-serif;
+  background:#ffffff;
+  color:var(--ink);
+  overflow-x:hidden;
+}
+
+/* ── PROGRESS NAV ── */
+#progress-bar{
+  position:fixed;top:0;left:0;
+  height:3px;width:0%;
+  background:linear-gradient(90deg,#059669,#10b981,#2563eb);
+  z-index:1000;
+  transition:width 0.2s ease;
+}
+#nav{
+  position:fixed;top:3px;left:0;right:0;
+  height:52px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(13,31,60,0.07);
+  box-shadow:0 1px 12px rgba(13,31,60,0.05);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  z-index:999;
+}
+.nav-brand{font-size:13px;font-weight:600;color:#64748b;}
+.nav-brand b{color:#059669;}
+.nav-dots{display:flex;align-items:center;gap:6px;}
+.nav-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(13,31,60,0.14);
+  cursor:pointer;
+  transition:all 0.25s;
+  border:none;
+  padding:0;
+}
+.nav-dot.active{width:20px;border-radius:4px;background:#059669;}
+.nav-dot:hover:not(.active){background:rgba(5,150,105,0.35);}
+.nav-kbd{
+  font-size:11px;color:var(--t45);
+  display:flex;align-items:center;gap:6px;
+}
+.kbd{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:18px;
+  background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;
+  font-size:10px;font-weight:600;color:#475569;
+}
+
+/* ── SECTIONS ── */
+.slide{
+  min-height:100vh;
+  padding:80px 48px 60px;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.slide-inner{max-width:1060px;margin:0 auto;width:100%;}
+
+/* ── TITLE SLIDE ── */
+#s0{background:linear-gradient(160deg,#ecfdf5 0%,#ffffff 55%,#eff6ff 100%);}
+#s0::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(#a7f3d0 1px,transparent 1px);
+  background-size:30px 30px;
+  opacity:0.25;
+  pointer-events:none;
+}
+.title-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:#ffffff;border:1px solid #a7f3d0;border-radius:24px;
+  padding:5px 14px;
+  font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  color:#059669;margin-bottom:22px;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,5vw,60px);
+  line-height:1.1;color:#0d1f3c;
+  margin-bottom:16px;
+}
+.hero-title span{
+  background:linear-gradient(135deg,#059669,#10b981,#2563eb);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{font-size:17px;color:var(--t70);max-width:580px;line-height:1.6;margin-bottom:40px;}
+.stat-row{display:flex;flex-wrap:wrap;gap:16px;}
+.stat-pill{
+  background:#ffffff;border:1px solid #d1fae5;border-radius:10px;
+  padding:14px 22px;text-align:center;
+}
+.stat-num{font-size:28px;font-weight:700;color:#059669;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--t70);margin-top:4px;letter-spacing:0.04em;}
+
+/* ── ACCOUNTS SLIDE ── */
+#s1{background:var(--deep);}
+.accounts-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px;margin-top:24px;
+}
+.account-card{
+  background:#ffffff;border-radius:10px;
+  padding:14px 16px;
+  border-left:4px solid var(--role-color,#059669);
+  border-top:1px solid rgba(13,31,60,0.07);
+  border-right:1px solid rgba(13,31,60,0.07);
+  border-bottom:1px solid rgba(13,31,60,0.07);
+}
+.account-role{
+  font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--role-color,#059669);margin-bottom:5px;
+}
+.account-name{font-size:14px;font-weight:600;color:#1e293b;}
+.account-login{font-size:11px;color:var(--t45);font-family:monospace;margin-top:3px;}
+.account-pass{font-size:11px;color:var(--t45);font-family:monospace;}
+.account-scope{
+  display:inline-block;margin-top:7px;
+  font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
+  background:rgba(13,31,60,0.06);border-radius:4px;padding:2px 7px;color:var(--t70);
+}
+
+/* ── SCENE SLIDES ── */
+.scene-slide{background:#ffffff;}
+.scene-slide:nth-child(odd){background:var(--deep);}
+.scene-num{
+  font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--t45);margin-bottom:12px;
+}
+.scene-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,3.5vw,36px);
+  color:#0d1f3c;line-height:1.2;margin-bottom:20px;
+}
+.scene-body{
+  display:grid;
+  grid-template-columns:1fr 1.6fr;
+  gap:28px;align-items:start;
+}
+@media(max-width:768px){.scene-body{grid-template-columns:1fr;}}
+
+/* Role badge block */
+.role-block{
+  background:var(--role-bg,#ecfdf5);
+  border:1px solid var(--role-border,#a7f3d0);
+  border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.role-avatar{
+  width:52px;height:52px;border-radius:14px;
+  background:var(--role-color,#059669);
+  display:flex;align-items:center;justify-content:center;
+  color:#ffffff;font-size:20px;font-weight:700;
+  font-family:'Playfair Display',serif;flex-shrink:0;
+}
+.role-name{font-size:16px;font-weight:700;color:#1e293b;}
+.role-title{font-size:12px;color:var(--t70);}
+.role-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--role-color,#059669);
+  color:#ffffff;border-radius:6px;padding:3px 10px;
+  font-size:11px;font-weight:700;letter-spacing:0.04em;width:fit-content;
+}
+.role-module{
+  font-size:12px;color:var(--t70);
+  display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;
+}
+.role-module span{
+  background:rgba(13,31,60,0.06);border-radius:5px;
+  padding:2px 8px;font-size:11px;font-weight:600;color:#334155;
+}
+.status-box{
+  margin-top:4px;background:#ffffff;
+  border:1px solid var(--role-border,#a7f3d0);
+  border-radius:8px;padding:10px 12px;
+}
+.status-box-label{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--role-color,#059669);margin-bottom:4px;}
+.status-box-val{font-size:13px;font-weight:600;color:#1e293b;}
+.status-box-sub{font-size:11px;color:var(--t70);}
+
+/* Actions block */
+.actions-block{display:flex;flex-direction:column;gap:12px;}
+.action-list{
+  background:#ffffff;border:1px solid rgba(13,31,60,0.08);
+  border-radius:12px;overflow:hidden;
+}
+.action-list-head{
+  background:linear-gradient(90deg,var(--role-bg,#ecfdf5),#f8fafc);
+  border-bottom:1px solid rgba(13,31,60,0.07);
+  padding:10px 16px;
+  font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
+  color:var(--t70);
+}
+.action-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:10px 16px;
+  border-bottom:1px solid rgba(13,31,60,0.05);
+  font-size:13px;color:var(--t90);line-height:1.5;
+}
+.action-item:last-child{border-bottom:none;}
+.action-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--role-color,#059669);color:#ffffff;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.action-text strong{color:#1e293b;}
+
+/* RBAC callout */
+.rbac-callout{
+  background:linear-gradient(135deg,var(--role-bg,#ecfdf5),#f8fafc);
+  border:1px solid var(--role-border,#a7f3d0);
+  border-left:4px solid var(--role-color,#059669);
+  border-radius:10px;padding:14px 16px;
+  font-size:13px;color:#334155;line-height:1.6;
+}
+.rbac-callout-label{
+  font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;
+  color:var(--role-color,#059669);margin-bottom:6px;
+}
+
+/* Handoff divider */
+.handoff{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;margin:14px 0;font-size:12px;color:var(--t45);
+}
+.handoff-line{flex:1;height:1px;background:var(--t20);}
+
+/* Section label */
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:#059669;margin-bottom:18px;
+}
+
+/* ── SUMMARY SLIDE ── */
+#s_end{background:linear-gradient(160deg,#ecfdf5 0%,#f8fafc 50%,#eff6ff 100%);}
+.summary-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:14px;margin-top:28px;
+}
+.summary-card{
+  background:#ffffff;border:1px solid #d1fae5;border-radius:12px;
+  padding:16px;text-align:center;
+}
+.summary-icon{font-size:24px;margin-bottom:8px;}
+.summary-title{font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;}
+.summary-desc{font-size:11px;color:var(--t70);line-height:1.5;}
+
+/* ── ANIMATIONS ── */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity 0.5s ease,transform 0.5s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+@media print{
+  #nav,#progress-bar{display:none!important;}
+  .slide{min-height:auto;padding:40px;page-break-after:always;}
+  .reveal{opacity:1!important;transform:none!important;}
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <div class="nav-brand"><b>Pasakja</b> · Defense Demo</div>
+  <div class="nav-dots" id="nav-dots"></div>
+  <div class="nav-kbd">
+    <span class="kbd">◀</span><span class="kbd">▶</span>
+    <span style="margin-left:4px;">navigate</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════ TITLE ══ -->
+<section class="slide" id="s0" data-title="Overview">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="title-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Capstone Defense · 2025
+      </div>
+      <h1 class="hero-title">
+        Pasakja<br>
+        <span>Community Transportation System</span>
+      </h1>
+      <p class="hero-sub">
+        A complete ride-booking day — from admin setup and driver verification to real-time passenger booking, driver dispatch, GPS navigation, and emergency SOS. Three roles, twelve scenes, every action enforced by the system.
+      </p>
+      <div class="stat-row">
+        <div class="stat-pill"><div class="stat-num">12</div><div class="stat-lbl">Scenes</div></div>
+        <div class="stat-pill"><div class="stat-num">3</div><div class="stat-lbl">User Roles</div></div>
+        <div class="stat-pill"><div class="stat-num">22</div><div class="stat-lbl">System Interfaces</div></div>
+        <div class="stat-pill"><div class="stat-num" style="color:#2563eb;">4.79</div><div class="stat-lbl">ISO 9126 Grand Mean</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--t45);margin-top:16px;">
+        Bucas Grande Foundation College · Socorro, Surigao del Norte · Bachelor of Science in Information Technology
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ ACCOUNTS ══ -->
+<section class="slide" id="s1" data-title="Accounts">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="section-label">Demo Accounts</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(20px,3vw,32px);color:#0d1f3c;margin-bottom:8px;">Cast of Characters</h2>
+      <p style="font-size:14px;color:var(--t70);margin-bottom:4px;">Each login is locked to exactly what their role permits — nothing more.</p>
+    </div>
+    <div class="accounts-grid reveal">
+
+      <div class="account-card" style="--role-color:var(--admin)">
+        <div class="account-role">Administrator</div>
+        <div class="account-name">System Administrator</div>
+        <div class="account-login">admin@demo.com</div>
+        <div class="account-pass">password: demo123</div>
+        <div class="account-scope">Full access</div>
+      </div>
+
+      <div class="account-card" style="--role-color:var(--driver)">
+        <div class="account-role">Driver (Verified)</div>
+        <div class="account-name">Juan Dela Cruz</div>
+        <div class="account-login">driver@demo.com</div>
+        <div class="account-pass">password: demo123</div>
+        <div class="account-scope">Tricycle · SRG-1234</div>
+      </div>
+
+      <div class="account-card" style="--role-color:var(--passenger)">
+        <div class="account-role">Passenger</div>
+        <div class="account-name">Maria Santos</div>
+        <div class="account-login">passenger@demo.com</div>
+        <div class="account-pass">password: demo123</div>
+        <div class="account-scope">Ride booking · Trips</div>
+      </div>
+
+      <div class="account-card" style="--role-color:var(--public)">
+        <div class="account-role">New User (No Account Yet)</div>
+        <div class="account-name">Any Community Member</div>
+        <div class="account-login">/register</div>
+        <div class="account-pass">register as Passenger or Driver</div>
+        <div class="account-scope">Self-registration</div>
+      </div>
+
+    </div>
+    <p style="font-size:12px;color:var(--t45);margin-top:20px;">
+      Run <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">npx prisma db seed</code> to restore demo accounts and sample data.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 0 — LANDING PAGE ══ -->
+<section class="slide scene-slide" id="sc0" data-title="Landing Page" style="background:var(--public-bg);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 0 · No Login Required</div>
+      <h2 class="scene-title">Any Resident Views the Pasakja Homepage</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--public);--role-bg:var(--public-bg);--role-border:var(--public-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--public);font-size:22px;">🏠</div>
+          <div>
+            <div class="role-name">Community Resident</div>
+            <div class="role-title">No account required</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--public);">public</div>
+        <div class="role-module">Page: <span>/</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          Any resident of Socorro can open the app and immediately understand what Pasakja offers — without creating an account or logging in first.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--public);">1</div>
+            <div class="action-text">Open the app URL → landing page loads with <strong>no login prompt</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--public);">2</div>
+            <div class="action-text">See six feature highlights: <strong>GPS Booking, Real-Time Tracking, Auto Fare Calculation, Driver Verification, Quick Dispatching, Trip Ratings</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--public);">3</div>
+            <div class="action-text">View the <strong>How It Works</strong> section — three steps: Register & Book → Driver Accepts → Ride & Pay</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--public);">4</div>
+            <div class="action-text">Click <strong>Get Started</strong> to proceed to registration, or <strong>Sign In</strong> for returning users</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">Open access by design</div>
+          The landing page is fully public. A community member does not need to create an account to understand what Pasakja does — they can evaluate the system before deciding to register as a passenger or driver.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 1 — PASSENGER REGISTER ══ -->
+<section class="slide scene-slide" id="sc1" data-title="Passenger Register">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 1 · Onboarding</div>
+      <h2 class="scene-title">New Passenger Creates an Account</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--passenger);--role-bg:var(--passenger-bg);--role-border:var(--passenger-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--passenger);">P</div>
+          <div>
+            <div class="role-name">Maria Santos</div>
+            <div class="role-title">Passenger · Socorro Resident</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--passenger);">passenger</div>
+        <div class="role-module">Page: <span>/register</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          Self-registration is open to all community members. No admin approval is needed for passengers — they are active immediately after signing up.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">1</div>
+            <div class="action-text">Click <strong>Get Started</strong> → lands on <strong>/register</strong> with Passenger tab active</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">2</div>
+            <div class="action-text">Enter: <strong>Full Name, Email, Phone Number, Password</strong> → Submit</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">3</div>
+            <div class="action-text">Automatically redirected to <strong>/passenger</strong> dashboard — no pending status</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">4</div>
+            <div class="action-text">Dashboard shows: <em>"Hello, Maria! 👋 Where are you heading today?"</em> with stats and a <strong>Book a Ride</strong> button</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Newly registered passengers get the <strong>PASSENGER</strong> role. They cannot access <code>/driver</code> or <code>/admin</code> routes — the server middleware redirects them back to their own dashboard automatically.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 2 — DRIVER REGISTER + ADMIN VERIFY ══ -->
+<section class="slide scene-slide" id="sc2" data-title="Driver Verify" style="background:var(--deep);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 2 · Driver Onboarding</div>
+      <h2 class="scene-title">Driver Registers → Admin Verifies</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--driver);--role-bg:var(--driver-bg);--role-border:var(--driver-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--driver);">D</div>
+          <div>
+            <div class="role-name">Juan Dela Cruz</div>
+            <div class="role-title">Driver · Honda Wave 125 · SRG-1234</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--driver);">driver</div>
+        <div class="role-module">Pages: <span>/register</span><span>/driver</span><span>/admin/drivers</span></div>
+        <div class="status-box" style="--role-color:var(--driver);--role-border:var(--driver-border);">
+          <div class="status-box-label">Driver default status after register</div>
+          <div class="status-box-val">PENDING</div>
+          <div class="status-box-sub">Cannot accept bookings until Admin verifies</div>
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Driver Registration Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">1</div>
+            <div class="action-text">Click <strong>Get Started → Driver tab</strong> — form expands with vehicle fields</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">2</div>
+            <div class="action-text">Fill: Name, Email, Phone, <strong>License No., Vehicle Type, Plate, Model</strong>, Password → Submit</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">3</div>
+            <div class="action-text">Redirected to <strong>/driver</strong> — status badge shows <em>"Awaiting admin verification"</em>. Availability toggle is <strong>disabled</strong></div>
+          </div>
+        </div>
+        <div class="handoff"><div class="handoff-line"></div><span style="font-size:13px;">🔄 Switch to Admin</span><div class="handoff-line"></div></div>
+        <div class="action-list" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+          <div class="action-list-head" style="background:linear-gradient(90deg,var(--admin-bg),#f8fafc);">Admin Verification Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">4</div>
+            <div class="action-text">Log in as <strong>admin@demo.com</strong> → go to <strong>Driver Management</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">5</div>
+            <div class="action-text">New driver appears with <strong>PENDING</strong> badge — view license, vehicle, contact</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">6</div>
+            <div class="action-text">Click <strong>Verify</strong> → status changes to <strong>VERIFIED</strong> instantly</div>
+          </div>
+        </div>
+        <div class="rbac-callout" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+          <div class="rbac-callout-label" style="color:var(--admin);">RBAC in action</div>
+          Only the <strong>Admin</strong> can verify or suspend drivers. A PENDING driver cannot toggle their availability or appear to passengers as available. This ensures only vetted, legitimate drivers operate on the platform.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 3 — BOOK A RIDE ══ -->
+<section class="slide scene-slide" id="sc3" data-title="Book a Ride">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 3 · Ride Request</div>
+      <h2 class="scene-title">Passenger Books a Ride</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--passenger);--role-bg:var(--passenger-bg);--role-border:var(--passenger-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--passenger);">M</div>
+          <div>
+            <div class="role-name">Maria Santos</div>
+            <div class="role-title">Passenger · Booking</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--passenger);">passenger</div>
+        <div class="role-module">Page: <span>/passenger/book</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          GPS captures the passenger's current location automatically. The system computes the quoted fare before the booking is confirmed.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">1</div>
+            <div class="action-text">Log in as <strong>passenger@demo.com</strong> → click <strong>Book a Ride</strong> on dashboard</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">2</div>
+            <div class="action-text">Allow browser GPS permission → <strong>pickup coordinates captured automatically</strong> (Socorro coordinates)</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">3</div>
+            <div class="action-text">Enter drop-off address: <em>"Socorro Public Market"</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">4</div>
+            <div class="action-text">Select payment method: <strong>Cash</strong> (or Online/GCash for PayMongo demo)</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">5</div>
+            <div class="action-text">See <strong>quoted fare auto-calculated</strong> from zone configuration (e.g. ₱41.00 for 2 km in Zone 1)</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">6</div>
+            <div class="action-text">Submit → booking status is <strong>PENDING</strong> — active booking card appears on passenger dashboard</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">Fare formula in action</div>
+          <strong>Fare = Base Fare + (Distance × Per-km Rate)</strong><br>
+          Zone 1 (Town Center): ₱25.00 base + ₱8.00/km. For a 2 km trip: ₱25 + ₱16 = <strong>₱41.00</strong>. The admin sets the rates; the system computes everything automatically.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 4 — DRIVER ACCEPTS ══ -->
+<section class="slide scene-slide" id="sc4" data-title="Driver Accepts" style="background:var(--deep);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 4 · Dispatch</div>
+      <h2 class="scene-title">Driver Goes Online and Accepts the Booking</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--driver);--role-bg:var(--driver-bg);--role-border:var(--driver-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--driver);">J</div>
+          <div>
+            <div class="role-name">Juan Dela Cruz</div>
+            <div class="role-title">Driver · VERIFIED · Tricycle</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--driver);">driver</div>
+        <div class="role-module">Pages: <span>/driver</span><span>/driver/bookings</span></div>
+        <div class="status-box" style="--role-color:var(--driver);--role-border:var(--driver-border);">
+          <div class="status-box-label">Before this scene</div>
+          <div class="status-box-val">Availability: Offline</div>
+          <div class="status-box-sub">Toggle to Online to receive bookings</div>
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">1</div>
+            <div class="action-text">Log in as <strong>driver@demo.com</strong> → lands on /driver dashboard</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">2</div>
+            <div class="action-text">Toggle <strong>Availability to Online</strong> — driver now appears as available in the system</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">3</div>
+            <div class="action-text">Pending booking from Maria Santos appears in the <strong>Available Bookings</strong> section</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">4</div>
+            <div class="action-text">See booking card: passenger name, pickup and drop-off addresses, fare, payment method</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">5</div>
+            <div class="action-text">Click <strong>Accept</strong> → booking status changes to <em>ACCEPTED</em> and is now assigned exclusively to this driver</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">6</div>
+            <div class="action-text">Switch to passenger view — dashboard active booking card now shows <strong>ACCEPTED</strong> with driver name</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Only <strong>VERIFIED</strong> drivers with availability set to Online can see and accept pending bookings. The page auto-refreshes so new requests appear without manual reload. Passengers and admins do not see this screen.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 5 — TRIP IN PROGRESS ══ -->
+<section class="slide scene-slide" id="sc5" data-title="Navigation">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 5 · Field</div>
+      <h2 class="scene-title">Driver Navigates to Pickup &amp; Starts the Trip</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--driver);--role-bg:var(--driver-bg);--role-border:var(--driver-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--driver);">J</div>
+          <div>
+            <div class="role-name">Juan Dela Cruz</div>
+            <div class="role-title">Driver · Active Trip</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--driver);">driver</div>
+        <div class="role-module">Page: <span>/driver/navigate</span><span>/driver/bookings</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          The Navigation page shows the active trip details and a map with pickup and drop-off pins. The driver progresses the trip through each status.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">1</div>
+            <div class="action-text">Go to <strong>/driver/navigate</strong> → Active Trip card shows: passenger name, pickup + drop-off addresses, fare</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">2</div>
+            <div class="action-text">Trip map displays <strong>pickup pin (blue)</strong> and <strong>drop-off pin (red)</strong> on the map</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">3</div>
+            <div class="action-text">After arriving at pickup: click <strong>Picked Up</strong> in /driver/bookings → status changes to <em>PICKED_UP</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">4</div>
+            <div class="action-text">Once moving: click <strong>Start Trip</strong> → status changes to <em>IN_PROGRESS</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">5</div>
+            <div class="action-text">Passenger dashboard reflects each status update in real time: <em>ACCEPTED → PICKED_UP → IN_PROGRESS</em></div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">Booking status lifecycle</div>
+          <strong>PENDING → ACCEPTED → PICKED_UP → IN_PROGRESS → COMPLETED</strong> is the full lifecycle. Each transition is driver-initiated through the bookings page. Both the passenger and the admin see every status change as it happens.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 6 — COMPLETION & RATING ══ -->
+<section class="slide scene-slide" id="sc6" data-title="Complete & Rate" style="background:var(--deep);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 6 · End of Trip</div>
+      <h2 class="scene-title">Driver Completes the Trip — Passenger Rates</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--driver);--role-bg:var(--driver-bg);--role-border:var(--driver-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--driver);">J</div>
+          <div>
+            <div class="role-name">Juan Dela Cruz → Maria Santos</div>
+            <div class="role-title">Driver completes · Passenger rates</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--driver);">driver</div>
+        <div class="role-module">Pages: <span>/driver/bookings</span><span>/driver/earnings</span><span>/passenger/trips</span></div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Driver Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">1</div>
+            <div class="action-text">Click <strong>Complete Trip</strong> → booking status changes to <em>COMPLETED</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">2</div>
+            <div class="action-text">An <strong>Earning record is created automatically</strong> — e.g. ₱41.00 added to driver's total</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">3</div>
+            <div class="action-text">Go to <strong>/driver/earnings</strong> — new earning visible in history: amount, date, total earnings updated</div>
+          </div>
+        </div>
+        <div class="handoff"><div class="handoff-line"></div><span style="font-size:13px;">🔄 Switch to Passenger</span><div class="handoff-line"></div></div>
+        <div class="action-list" style="--role-color:var(--passenger);--role-bg:var(--passenger-bg);--role-border:var(--passenger-border);">
+          <div class="action-list-head" style="background:linear-gradient(90deg,var(--passenger-bg),#f8fafc);">Passenger Rating Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">4</div>
+            <div class="action-text">Switch to <strong>passenger@demo.com</strong> → go to <strong>My Trips</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">5</div>
+            <div class="action-text">Completed trip shows a <strong>rate driver</strong> option — select 5 stars, add comment: <em>"Very professional!"</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">6</div>
+            <div class="action-text">Submit → driver's average rating on their profile and dashboard updates immediately</div>
+          </div>
+        </div>
+        <div class="rbac-callout" style="--role-color:var(--passenger);--role-bg:var(--passenger-bg);--role-border:var(--passenger-border);">
+          <div class="rbac-callout-label" style="color:var(--passenger);">Accountability by design</div>
+          Only the <strong>passenger who booked that specific trip</strong> can submit a rating. Ratings are one-per-booking and cannot be changed after submission. This ensures every score on a driver's profile is legitimate.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 7 — ADMIN DASHBOARD ══ -->
+<section class="slide scene-slide" id="sc7" data-title="Admin Dashboard">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 7 · Command View</div>
+      <h2 class="scene-title">Admin Monitors All Platform Activity</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--admin);">A</div>
+          <div>
+            <div class="role-name">System Administrator</div>
+            <div class="role-title">Admin · Full Access</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--admin);">admin</div>
+        <div class="role-module">Modules: <span>Dashboard</span><span>Bookings</span><span>Drivers</span><span>Passengers</span></div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">1</div>
+            <div class="action-text">Log in as <strong>admin@demo.com</strong> → Admin Dashboard at <strong>/admin</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">2</div>
+            <div class="action-text">Summary cards: <strong>Total Bookings, Completed, Pending, Cancelled, Active Drivers, Passengers, Revenue, Pending Verification, Unresolved SOS</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">3</div>
+            <div class="action-text">Recent Bookings table — shows the just-completed trip: Maria Santos → Juan Dela Cruz, ₱41.00, COMPLETED</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">4</div>
+            <div class="action-text">Navigate to <strong>/admin/bookings</strong> — full list of all bookings with status, fare, payment method, and timestamps</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">5</div>
+            <div class="action-text">Navigate to <strong>/admin/passengers</strong> — registered passenger list with email, phone, trip count, join date</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Only the <strong>Admin</strong> sees the full platform overview — revenue totals, all bookings, all passengers, and all driver records. Passengers see only their own trips. Drivers see only their own bookings and earnings.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 8 — FARE & ZONE MANAGEMENT ══ -->
+<section class="slide scene-slide" id="sc8" data-title="Fares & Zones" style="background:var(--deep);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 8 · Configuration</div>
+      <h2 class="scene-title">Admin Manages Fare Zones and Rates</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--admin);">A</div>
+          <div>
+            <div class="role-name">System Administrator</div>
+            <div class="role-title">Admin · Fare Configuration</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--admin);">admin</div>
+        <div class="role-module">Page: <span>/admin/fares</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          Zone rates are the source of all fare calculations. Changing them here affects every future booking immediately — no code change needed.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">1</div>
+            <div class="action-text">Go to <strong>Fare & Zones</strong> → two pre-configured zones: <em>Zone 1 – Town Center (₱25 base, ₱8/km)</em> and <em>Zone 2 – Extended Area (₱35 base, ₱10/km)</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">2</div>
+            <div class="action-text">Click the <strong>pencil (Edit)</strong> icon on Zone 1 → dialog opens pre-filled with current name, description, base fare, and per-km rate</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">3</div>
+            <div class="action-text">Update base fare to <strong>₱28.00</strong> → Save → zone card updates immediately with the new rate</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">4</div>
+            <div class="action-text">Fill <strong>Add New Zone</strong> form: name, description, base fare, per-km rate → Add Zone → new card appears in the list</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">5</div>
+            <div class="action-text">Click the <strong>trash (Delete)</strong> icon on the new zone → confirmation dialog → Delete → zone removed instantly</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Only the <strong>Admin</strong> can access the Fare & Zones page. Drivers and passengers do not see this module in their navigation. Fare updates take effect on the next booking — the system always reads the current zone configuration at booking time.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 9 — SOS EMERGENCY ══ -->
+<section class="slide scene-slide" id="sc9" data-title="SOS Emergency">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 9 · Safety</div>
+      <h2 class="scene-title">Passenger Sends SOS — Admin Responds</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--passenger);--role-bg:var(--passenger-bg);--role-border:var(--passenger-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:#dc2626;font-size:22px;">🆘</div>
+          <div>
+            <div class="role-name">Maria Santos</div>
+            <div class="role-title">Passenger · Emergency SOS</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:#dc2626;">emergency</div>
+        <div class="role-module">Pages: <span>/passenger/sos</span><span>/admin/sos</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          The SOS button is accessible at all times from the passenger sidebar — not just during active trips. Help is never more than one tap away.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Passenger SOS Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">1</div>
+            <div class="action-text">Log in as <strong>passenger@demo.com</strong> → click <strong>Emergency SOS</strong> in sidebar</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">2</div>
+            <div class="action-text">GPS coordinates are captured automatically. Type optional message: <em>"Need help at the tricycle terminal"</em></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--passenger);">3</div>
+            <div class="action-text">Press the <strong>SOS button</strong> → success screen: <em>"SOS Alert Sent!"</em> confirmation with timestamp</div>
+          </div>
+        </div>
+        <div class="handoff"><div class="handoff-line"></div><span style="font-size:13px;">🔄 Switch to Admin</span><div class="handoff-line"></div></div>
+        <div class="action-list" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+          <div class="action-list-head" style="background:linear-gradient(90deg,var(--admin-bg),#f8fafc);">Admin Response Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">4</div>
+            <div class="action-text">Switch to <strong>admin@demo.com</strong> → go to <strong>/admin/sos</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">5</div>
+            <div class="action-text"><strong>Active Emergency</strong> card appears with red border — passenger name, phone, GPS coordinates, message, timestamp</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">6</div>
+            <div class="action-text">Click <strong>Mark as Resolved</strong> → alert moves to resolved section, red border removed</div>
+          </div>
+        </div>
+        <div class="rbac-callout" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+          <div class="rbac-callout-label" style="color:var(--admin);">Failsafe by design</div>
+          If GPS permission is denied, the SOS is still submitted using a fallback Socorro coordinate — the alert is never blocked. Admin Dashboard shows the unresolved SOS count in the summary cards. Only the Admin can resolve alerts.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 10 — DRIVER PROFILE ══ -->
+<section class="slide scene-slide" id="sc10" data-title="Driver Profile" style="background:var(--deep);">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 10 · Earnings &amp; Profile</div>
+      <h2 class="scene-title">Driver Reviews Earnings and Profile</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--driver);--role-bg:var(--driver-bg);--role-border:var(--driver-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--driver);">J</div>
+          <div>
+            <div class="role-name">Juan Dela Cruz</div>
+            <div class="role-title">Driver · Honda Wave 125 · SRG-1234</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--driver);">driver</div>
+        <div class="role-module">Pages: <span>/driver/earnings</span><span>/driver/profile</span></div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Earnings Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">1</div>
+            <div class="action-text">Go to <strong>/driver/earnings</strong> → summary cards: <strong>Total Earnings, This Week, This Month, Completed Trips</strong></div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">2</div>
+            <div class="action-text">Earnings history list — each row: date, amount earned, paginated last 30 records</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">3</div>
+            <div class="action-text">Go to <strong>/driver/profile</strong> — see verification status badge, vehicle info, average rating (5.0 ⭐ from Maria's rating)</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--driver);">4</div>
+            <div class="action-text">Click <strong>Upload Profile Photo</strong> → select an image → uploads to Cloudinary → profile image updates immediately</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Drivers only see their own earnings and their own rating history. They cannot view other drivers' earnings or profiles. The admin can see all driver data from the Driver Management page — drivers cannot see each other's records.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCENE 11 — ADMIN REPORTS ══ -->
+<section class="slide scene-slide" id="sc11" data-title="Admin Reports">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="scene-num">Scene 11 · Analytics</div>
+      <h2 class="scene-title">Admin Reviews Platform Reports</h2>
+    </div>
+    <div class="scene-body reveal" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
+      <div class="role-block">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="role-avatar" style="background:var(--admin);">A</div>
+          <div>
+            <div class="role-name">System Administrator</div>
+            <div class="role-title">Admin · End-of-Day Review</div>
+          </div>
+        </div>
+        <div class="role-badge" style="background:var(--admin);">admin</div>
+        <div class="role-module">Page: <span>/admin/reports</span><span>/admin/settings</span></div>
+        <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
+          The Reports module is restricted to Administrators. It provides month-over-month analytics for operational review without any manual data entry or consolidation.
+        </div>
+      </div>
+      <div class="actions-block">
+        <div class="action-list">
+          <div class="action-list-head">Actions</div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">1</div>
+            <div class="action-text">Go to <strong>/admin/reports</strong> → month-over-month comparison: <strong>this month vs. last month</strong> for completed bookings and revenue</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">2</div>
+            <div class="action-text">Percentage change indicators — e.g. <em>"↑ 100% from last month"</em> if this is the first month</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">3</div>
+            <div class="action-text"><strong>Top Drivers</strong> table — Juan Dela Cruz: 1 trip, ₱41.00 this month, 5.0 ⭐ average rating</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">4</div>
+            <div class="action-text">Platform-wide average rating shown — currently <strong>5.0</strong> based on the demo trip</div>
+          </div>
+          <div class="action-item">
+            <div class="action-num" style="background:var(--admin);">5</div>
+            <div class="action-text">Go to <strong>/admin/settings</strong> — system info: Pasakja v1.0.0, Socorro, ₱ Philippine Peso, NextAuth JWT, bcryptjs (12 rounds)</div>
+          </div>
+        </div>
+        <div class="rbac-callout">
+          <div class="rbac-callout-label">RBAC in action</div>
+          Drivers and Passengers do not see the Reports or Settings pages at all — the sidebar entries do not exist for these roles. The Admin uses analytics data for operational decisions and capstone evaluation evidence.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ END SLIDE ══ -->
+<section class="slide" id="s_end" data-title="Summary">
+  <div class="slide-inner">
+    <div class="reveal">
+      <div class="section-label">What You Just Saw</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,42px);color:#0d1f3c;margin-bottom:10px;">
+        One Day. Three Roles.<br>
+        <span style="background:linear-gradient(135deg,#059669,#10b981,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Zero Manual Dispatch. Zero Paper.</span>
+      </h2>
+      <p style="font-size:15px;color:var(--t70);max-width:560px;margin-bottom:32px;line-height:1.6;">
+        Every step — from registration and booking to dispatch, navigation, payment, rating, and emergency response — was enforced by the system. Each user did exactly what their role permits. Nothing more.
+      </p>
+    </div>
+
+    <!-- Full trail summary -->
+    <div style="background:#ffffff;border:1px solid rgba(13,31,60,0.08);border-radius:14px;overflow:hidden;margin-bottom:28px;" class="reveal">
+      <div style="padding:12px 16px;background:var(--deep);border-bottom:1px solid rgba(13,31,60,0.07);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t70);">Complete Operational Trail</div>
+      <div class="action-item">
+        <div class="action-num" style="background:var(--public);">✓</div>
+        <div class="action-text"><strong>Public</strong> — viewed landing page features and system info without logging in</div>
+      </div>
+      <div class="action-item">
+        <div class="action-num" style="background:var(--passenger);">✓</div>
+        <div class="action-text"><strong>Passenger (Maria)</strong> — registered, booked a ride, tracked status, rated driver, sent SOS</div>
+      </div>
+      <div class="action-item">
+        <div class="action-num" style="background:var(--driver);">✓</div>
+        <div class="action-text"><strong>Driver (Juan)</strong> — registered, was verified, went online, accepted booking, navigated, completed trip, earned ₱41.00</div>
+      </div>
+      <div class="action-item">
+        <div class="action-num" style="background:var(--admin);">✓</div>
+        <div class="action-text"><strong>Admin</strong> — verified driver, monitored all bookings, managed fare zones, resolved SOS alert, reviewed analytics</div>
+      </div>
+    </div>
+
+    <div class="summary-grid reveal">
+      <div class="summary-card">
+        <div class="summary-icon">🔐</div>
+        <div class="summary-title">Role Enforcement</div>
+        <div class="summary-desc">Admin, Driver, and Passenger each see only their own modules. No accidental access, no workarounds possible.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">📍</div>
+        <div class="summary-title">GPS-Based Booking</div>
+        <div class="summary-desc">Pickup location captured automatically from the browser. No manual address typing for the passenger's current location.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">💰</div>
+        <div class="summary-title">Auto Fare Computation</div>
+        <div class="summary-desc">Zone-based formula: Base Fare + Distance × Per-km Rate. No negotiation, no ambiguity — the fare is shown before booking.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🛡️</div>
+        <div class="summary-title">Driver Verification</div>
+        <div class="summary-desc">Drivers are PENDING by default. Only an Admin can verify or suspend them. Unverified drivers cannot accept rides.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🆘</div>
+        <div class="summary-title">SOS Emergency</div>
+        <div class="summary-desc">One-tap SOS with GPS coordinates. Always accessible from sidebar. Admin resolves alerts from a dedicated management page.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">📊</div>
+        <div class="summary-title">Real-Time Analytics</div>
+        <div class="summary-desc">Month-over-month revenue, booking counts, and top driver performance. Always current — no manual reports needed.</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--t45);margin-top:28px;text-align:center;">
+      Pasakja: A Web-Based Community Transportation Booking &amp; Dispatching System<br>
+      Bucas Grande Foundation College · Socorro, Surigao del Norte · ISO 9126 Grand Mean 4.79 / 5.00
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ SCRIPTS ══ -->
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'))
+const dotsContainer = document.getElementById('nav-dots')
+const progressBar = document.getElementById('progress-bar')
+
+slides.forEach((slide, i) => {
+  const dot = document.createElement('button')
+  dot.className = 'nav-dot'
+  dot.title = slide.dataset.title || `Slide ${i+1}`
+  dot.addEventListener('click', () => {
+    slide.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+  dotsContainer.appendChild(dot)
+})
+
+const dots = Array.from(dotsContainer.querySelectorAll('.nav-dot'))
+let activeDot = 0
+
+function updateNav() {
+  const scrollY = window.scrollY
+  const totalH = document.body.scrollHeight - window.innerHeight
+  const pct = totalH > 0 ? (scrollY / totalH) * 100 : 0
+  progressBar.style.width = pct + '%'
+
+  let found = 0
+  slides.forEach((slide, i) => {
+    const rect = slide.getBoundingClientRect()
+    if (rect.top <= window.innerHeight * 0.4) found = i
+  })
+  if (found !== activeDot) {
+    dots[activeDot]?.classList.remove('active')
+    dots[found]?.classList.add('active')
+    activeDot = found
+  }
+}
+
+window.addEventListener('scroll', updateNav, { passive: true })
+updateNav()
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    const next = Math.min(activeDot + 1, slides.length - 1)
+    slides[next].scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    const prev = Math.max(activeDot - 1, 0)
+    slides[prev].scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+})
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible')
+  })
+}, { threshold: 0.12 })
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+</script>
+</body>
+</html>

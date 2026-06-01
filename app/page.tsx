@@ -242,6 +242,14 @@ export default function LandingPage() {
               <Link href="/register" className="hover:text-primary transition-colors">
                 Register
               </Link>
+              <a
+                href="/defense-demo.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Defense Demo
+              </a>
             </div>
           </div>
         </div>
