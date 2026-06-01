@@ -115,13 +115,6 @@ export default function LoginPage() {
                 Create one
               </Link>
             </div>
-
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-              <p className="font-medium mb-1">Demo Accounts:</p>
-              <p>Passenger: passenger@demo.com / demo123</p>
-              <p>Driver: driver@demo.com / demo123</p>
-              <p>Admin: admin@demo.com / demo123</p>
-            </div>
           </CardContent>
         </Card>
       </div>
