@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ZoneFare {
@@ -98,9 +98,43 @@ export function ZoneActions({ zone }: { zone: Zone }) {
     }
   }
 
+  async function handleActivate() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/zones/${zone.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate" }),
+      });
+      if (res.ok) {
+        toast.success(`"${zone.name}" is now the active fare rate`);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error ?? "Failed to activate zone");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <>
-      <div className="flex gap-1 shrink-0">
+      <div className="flex gap-1 shrink-0 items-center">
+        {!zone.isActive && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs text-green-700 border-green-300 hover:bg-green-50"
+            disabled={isLoading}
+            onClick={handleActivate}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Set Active
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

@@ -18,6 +18,9 @@ interface FareEstimate {
   estimatedFare: number;
   centavos: number;
   distanceKm: number;
+  zoneName?: string;
+  baseFare?: number;
+  perKmRate?: number;
 }
 
 export default function BookRidePage() {
@@ -107,6 +110,9 @@ export default function BookRidePage() {
           estimatedFare: est.estimatedFare ?? 0,
           centavos: est.centavos ?? 0,
           distanceKm: km,
+          zoneName: (est as { zoneName?: string }).zoneName,
+          baseFare: (est as { baseFare?: number }).baseFare,
+          perKmRate: (est as { perKmRate?: number }).perKmRate,
         });
       })
       .catch((err: unknown) => {
@@ -389,12 +395,22 @@ export default function BookRidePage() {
                   </p>
                 )}
                 {fareEstimate && !estimateError && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
-                    {paymentMethod === "ONLINE"
-                      ? "Charged via GCash before ride"
-                      : "Pay cash to driver after ride"}
-                  </p>
+                  <div className="mt-1 space-y-0.5">
+                    <p className="text-xs text-muted-foreground">
+                      ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
+                      {paymentMethod === "ONLINE"
+                        ? "Charged via GCash before ride"
+                        : "Pay cash to driver after ride"}
+                    </p>
+                    {fareEstimate.zoneName && (
+                      <p className="text-xs text-muted-foreground">
+                        Rate: <span className="font-medium text-foreground">{fareEstimate.zoneName}</span>
+                        {fareEstimate.baseFare !== undefined && fareEstimate.perKmRate !== undefined && (
+                          <> &middot; ₱{fareEstimate.baseFare} base + ₱{fareEstimate.perKmRate}/km</>
+                        )}
+                      </p>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

@@ -19,7 +19,16 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const { name, description, isActive, baseFare, perKmRate } = await req.json();
+    const body = await req.json();
+
+    // Special action: set this zone as the one active rate, deactivate all others
+    if (body.action === "activate") {
+      await prisma.zone.updateMany({ data: { isActive: false } });
+      await prisma.zone.update({ where: { id }, data: { isActive: true } });
+      return NextResponse.json({ success: true });
+    }
+
+    const { name, description, isActive, baseFare, perKmRate } = body;
 
     if (!name || baseFare === undefined || perKmRate === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

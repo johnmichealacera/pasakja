@@ -18,11 +18,12 @@ export async function GET(req: NextRequest) {
     const fare = await prisma.fare.findFirst({
       where: { zone: { isActive: true } },
       orderBy: { createdAt: "desc" },
+      include: { zone: true },
     });
 
     if (!fare) {
       return NextResponse.json(
-        { error: "No active fare configuration found" },
+        { error: "No active fare rate configured. Please ask the admin to set an active fare." },
         { status: 404 },
       );
     }
@@ -39,6 +40,7 @@ export async function GET(req: NextRequest) {
       baseFare,
       perKmRate,
       distanceKm,
+      zoneName: fare.zone.name,
     });
   } catch (error) {
     console.error("Fare estimate error:", error);
