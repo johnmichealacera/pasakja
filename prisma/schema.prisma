@@ -52,10 +52,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  passenger     Passenger?
-  driver        Driver?
-  admin         Admin?
-  notifications Notification[]
+  passenger      Passenger?
+  driver         Driver?
+  admin          Admin?
+  notifications  Notification[]
+  driverLocation DriverLocation?
 
   @@index([email])
 }
@@ -92,6 +93,18 @@ model Driver {
   documents DriverDocument[]
 
   @@index([status, isAvailable])
+}
+
+model DriverLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId String?
+  latitude  Float
+  longitude Float
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
 }
 
 model DriverDocument {

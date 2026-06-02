@@ -16,6 +16,16 @@ export async function PATCH(
   const { id } = await params;
   const user = session.user as { id: string; role: string };
 
+  // Helper: delete the driver's live location row when a ride ends
+  async function clearDriverLocation(driverId: string) {
+    try {
+      const d = await prisma.driver.findUnique({ where: { id: driverId }, select: { userId: true } });
+      if (d) await prisma.driverLocation.deleteMany({ where: { userId: d.userId } });
+    } catch {
+      // Non-critical — ignore cleanup errors
+    }
+  }
+
   try {
     const body = await req.json();
     const { status, driverId } = body;
@@ -82,6 +92,8 @@ export async function PATCH(
           where: { id },
           data: { status: "COMPLETED", fare, paymentStatus },
         });
+        // Clear live location — ride is done, location must not leak to future rides
+        await clearDriverLocation(driver.id);
         return NextResponse.json({ booking: updated });
       }
     }
@@ -96,6 +108,8 @@ export async function PATCH(
           where: { id },
           data: { status: "CANCELLED" },
         });
+        // Clear any live location the driver may have posted
+        if (booking.driverId) await clearDriverLocation(booking.driverId);
         return NextResponse.json({ booking: updated });
       }
     }

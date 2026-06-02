@@ -148,6 +148,9 @@ export default async function DriverBookingsPage() {
                         lat: booking.dropoffLat,
                         lng: booking.dropoffLng,
                       }}
+                      driverId={driver.id}
+                      driverOnline={driver.isAvailable}
+                      bookingId={booking.id}
                     />
                     <div className="flex justify-end">
                       <Link href="/driver/navigate">

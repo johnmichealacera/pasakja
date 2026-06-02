@@ -106,6 +106,7 @@ export default async function DriverNavigatePage() {
                 }}
                 driverId={driver!.id}
                 driverOnline={driver!.isAvailable}
+                bookingId={activeBooking.id}
               />
             </CardContent>
           </Card>
