@@ -79,6 +79,7 @@ const ROLE_NAV_ITEMS: Record<
       { label: "SOS Alerts", href: "/admin/sos", icon: AlertCircle },
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
       { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Profile", href: "/admin/profile", icon: User },
     ],
   },
 };
