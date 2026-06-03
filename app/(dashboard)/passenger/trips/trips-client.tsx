@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin } from "lucide-react";
+import { Star, MapPin, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { LiveTrackingMap } from "@/components/maps/live-tracking-map";
 
@@ -25,10 +25,36 @@ export function TripsClient({
 }: TripsClientProps) {
   const router = useRouter();
   const isActive = ["ACCEPTED", "PICKED_UP", "IN_PROGRESS"].includes(status);
+  const canCancel = ["PENDING", "ACCEPTED"].includes(status);
   const canRate = status === "COMPLETED" && !hasRating;
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const [showMap, setShowMap] = useState(false);
   const [showRating, setShowRating] = useState(false);
+
+  async function handleCancel() {
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (res.ok) {
+        toast.success("Booking cancelled.");
+        setConfirmCancel(false);
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error((data as { error?: string }).error ?? "Failed to cancel booking");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setCancelling(false);
+    }
+  }
   const [hoveredStar, setHoveredStar] = useState(0);
   const [selectedStar, setSelectedStar] = useState(0);
   const [comment, setComment] = useState("");
@@ -64,7 +90,7 @@ export function TripsClient({
   return (
     <>
       {isActive && (
-        <div className="mt-3">
+        <div className="mt-3 space-y-3">
           <Button
             variant="outline"
             size="sm"
@@ -75,13 +101,57 @@ export function TripsClient({
             {showMap ? "Hide Tracking" : "Track Driver"}
           </Button>
           {showMap && (
-            <div className="mt-3">
-              <LiveTrackingMap
-                bookingId={bookingId}
-                pickup={pickup}
-                destination={destination}
-              />
+            <LiveTrackingMap
+              bookingId={bookingId}
+              pickup={pickup}
+              destination={destination}
+            />
+          )}
+        </div>
+      )}
+
+      {canCancel && (
+        <div className="mt-3">
+          {confirmCancel ? (
+            <div className="flex flex-col gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+              <p className="text-sm flex items-center gap-1.5 text-destructive font-medium">
+                <AlertTriangle className="h-4 w-4" />
+                Cancel this booking?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {status === "ACCEPTED"
+                  ? "The assigned driver will be notified."
+                  : "Your booking request will be removed."}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                >
+                  {cancelling ? "Cancelling…" : "Yes, cancel"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setConfirmCancel(false)}
+                  disabled={cancelling}
+                >
+                  Keep booking
+                </Button>
+              </div>
             </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setConfirmCancel(true)}
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Cancel Booking
+            </Button>
           )}
         </div>
       )}

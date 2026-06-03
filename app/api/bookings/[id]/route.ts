@@ -96,6 +96,25 @@ export async function PATCH(
         await clearDriverLocation(driver.id);
         return NextResponse.json({ booking: updated });
       }
+
+      if (status === "CANCELLED") {
+        if (booking.driverId !== driver.id) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        // Drivers may only cancel while status is ACCEPTED — not after picking up the passenger
+        if (booking.status !== "ACCEPTED") {
+          return NextResponse.json(
+            { error: "Cannot cancel after the passenger has been picked up" },
+            { status: 400 }
+          );
+        }
+        const updated = await prisma.booking.update({
+          where: { id },
+          data: { status: "CANCELLED" },
+        });
+        await clearDriverLocation(driver.id);
+        return NextResponse.json({ booking: updated });
+      }
     }
 
     if (user.role === "PASSENGER") {
@@ -104,6 +123,13 @@ export async function PATCH(
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       if (status === "CANCELLED") {
+        // Passengers may only cancel before the driver has picked them up
+        if (!["PENDING", "ACCEPTED"].includes(booking.status)) {
+          return NextResponse.json(
+            { error: "Cannot cancel after the driver has picked you up" },
+            { status: 400 }
+          );
+        }
         const updated = await prisma.booking.update({
           where: { id },
           data: { status: "CANCELLED" },

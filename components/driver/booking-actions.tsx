@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, MapPin, Flag } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, Flag, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface BookingActionsProps {
@@ -20,6 +20,7 @@ interface BookingActionsProps {
 export function BookingActions({ booking, isPending }: BookingActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   async function updateStatus(status: string, extraData?: Record<string, unknown>) {
     setIsLoading(true);
@@ -41,12 +42,14 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
         toast.success(messages[status] ?? "Status updated");
         router.refresh();
       } else {
-        toast.error("Failed to update booking");
+        const data = await res.json().catch(() => ({}));
+        toast.error((data as { error?: string }).error ?? "Failed to update booking");
       }
     } catch {
       toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
+      setConfirmCancel(false);
     }
   }
 
@@ -65,17 +68,58 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
   }
 
   if (booking.status === "ACCEPTED") {
+    if (confirmCancel) {
+      return (
+        <div className="flex flex-col gap-2 items-end">
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            Cancel this booking?
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => updateStatus("CANCELLED")}
+              disabled={isLoading}
+            >
+              {isLoading ? "Cancelling…" : "Yes, cancel"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setConfirmCancel(false)}
+              disabled={isLoading}
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => updateStatus("PICKED_UP")}
-        disabled={isLoading}
-        className="gap-1.5"
-      >
-        <MapPin className="h-4 w-4" />
-        Picked Up
-      </Button>
+      <div className="flex gap-2 flex-wrap justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => updateStatus("PICKED_UP")}
+          disabled={isLoading}
+          className="gap-1.5"
+        >
+          <MapPin className="h-4 w-4" />
+          Picked Up
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setConfirmCancel(true)}
+          disabled={isLoading}
+          className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <XCircle className="h-4 w-4" />
+          Cancel
+        </Button>
+      </div>
     );
   }
 
