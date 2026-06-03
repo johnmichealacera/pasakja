@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
-
-
 import { prisma } from "@/lib/prisma";
+import { driverAmount, platformFee } from "@/lib/commission";
 
 export async function PATCH(
   req: NextRequest,
@@ -69,18 +68,26 @@ export async function PATCH(
         if (booking.driverId !== driver.id) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-        const fare = body.fare ?? (Number(booking.quotedFare) || 15);
+        const grossFare = body.fare ?? (Number(booking.quotedFare) || 15);
+        const netDriver = driverAmount(grossFare);   // driver's 85%
+        const sysFee   = platformFee(grossFare);     // Pasakja's 15%
+
         await prisma.trip.upsert({
           where: { bookingId: id },
           update: { endTime: new Date(), distance: body.distance ?? null },
           create: { bookingId: id, endTime: new Date(), distance: body.distance ?? null },
         });
         await prisma.earning.create({
-          data: { driverId: driver.id, bookingId: id, amount: fare },
+          data: {
+            driverId:    driver.id,
+            bookingId:   id,
+            amount:      netDriver,   // what the driver receives
+            platformFee: sysFee,      // what Pasakja retains
+          },
         });
         await prisma.driver.update({
           where: { id: driver.id },
-          data: { totalEarnings: { increment: fare } },
+          data: { totalEarnings: { increment: netDriver } },
         });
         const paymentStatus =
           booking.paymentMethod === "CASH"
@@ -90,7 +97,7 @@ export async function PATCH(
               : "UNPAID";
         const updated = await prisma.booking.update({
           where: { id },
-          data: { status: "COMPLETED", fare, paymentStatus },
+          data: { status: "COMPLETED", fare: grossFare, paymentStatus },
         });
         // Clear live location — ride is done, location must not leak to future rides
         await clearDriverLocation(driver.id);

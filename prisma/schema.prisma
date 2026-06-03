@@ -205,12 +205,13 @@ model Rating {
 }
 
 model Earning {
-  id        String   @id @default(cuid())
-  driverId  String
-  driver    Driver   @relation(fields: [driverId], references: [id])
-  bookingId String?
-  amount    Decimal  @db.Decimal(10, 2)
-  date      DateTime @default(now())
+  id          String   @id @default(cuid())
+  driverId    String
+  driver      Driver   @relation(fields: [driverId], references: [id])
+  bookingId   String?
+  amount      Decimal  @db.Decimal(10, 2)          // Driver net payout
+  platformFee Decimal  @default(0) @db.Decimal(10, 2) // Pasakja platform cut
+  date        DateTime @default(now())
 
   @@index([driverId])
 }
