@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // trustHost is required for HTTP localhost and for deployments without HTTPS
+  trustHost: true,
   providers: [
     CredentialsProvider({
       name: "credentials",

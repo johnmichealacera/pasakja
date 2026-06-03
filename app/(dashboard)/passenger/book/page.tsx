@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Banknote, Smartphone, Users, CheckCircle, Loader2 } from "lucide-react";
+import { Banknote, Smartphone, Users, CheckCircle, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { MapPicker, type MapPickerValue } from "@/components/maps/map-picker";
+import { SOCORRO_PLACES, type SocorroPlace } from "@/lib/socorro-places";
 
 type PaymentMethod = "CASH" | "ONLINE";
 
@@ -37,6 +38,9 @@ export default function BookRidePage() {
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const estimateAbort = useRef<AbortController | null>(null);
+
+  // Selected destination from the quick-pick dropdown
+  const [selectedPlace, setSelectedPlace] = useState<SocorroPlace | null>(null);
 
   const handleMapChange = useCallback((v: MapPickerValue) => {
     setPicked((prev) => {
@@ -272,19 +276,74 @@ export default function BookRidePage() {
               <CardDescription>Where are you going?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">
-                  Select your route on the map
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Pickup is taken from GPS. Click the map to set your destination.
-                </p>
+              {/* ── Destination quick-pick dropdown ── */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  Select Destination
+                </label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={
+                    selectedPlace
+                      ? `${selectedPlace.lat},${selectedPlace.lng}`
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) {
+                      setSelectedPlace(null);
+                      return;
+                    }
+                    const [latStr, lngStr] = val.split(",");
+                    const lat = parseFloat(latStr);
+                    const lng = parseFloat(lngStr);
+                    // Find the matching place object for the display name
+                    for (const brgy of SOCORRO_PLACES) {
+                      const found = brgy.places.find(
+                        (p) => p.lat === lat && p.lng === lng
+                      );
+                      if (found) {
+                        setSelectedPlace(found);
+                        break;
+                      }
+                    }
+                  }}
+                >
+                  <option value="">— Choose a notable place —</option>
+                  {SOCORRO_PLACES.map((brgy) => (
+                    <optgroup key={brgy.barangay} label={`📍 ${brgy.barangay}`}>
+                      {brgy.places.map((place) => (
+                        <option
+                          key={`${place.lat},${place.lng}`}
+                          value={`${place.lat},${place.lng}`}
+                        >
+                          {place.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
 
-                <MapPicker
-                  onChange={handleMapChange}
-                  heightClassName="h-[360px] lg:h-[520px]"
-                />
+                {selectedPlace && (
+                  <div className="flex items-center justify-between text-xs text-muted-foreground bg-primary/5 rounded-md px-2.5 py-1.5 border border-primary/20">
+                    <span className="font-medium text-foreground">{selectedPlace.name}</span>
+                    <span className="font-mono">
+                      {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
+                    </span>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Or click anywhere on the map below to set a custom destination.
+                </p>
               </div>
+
+              <MapPicker
+                onChange={handleMapChange}
+                heightClassName="h-[320px] lg:h-[440px]"
+                destinationOverride={selectedPlace}
+              />
             </CardContent>
           </Card>
 

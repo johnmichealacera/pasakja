@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import type * as Leaflet from "leaflet";
 import type { LatLng } from "@/components/maps/types";
 import { cn } from "@/lib/utils";
+import { addMapTiles } from "@/lib/map-tiles";
 
 const POLL_INTERVAL_MS = 10_000; // 10 seconds
 const NEARBY_THRESHOLD_M = 300;  // show "Driver is nearby" within 300 m
@@ -86,11 +87,11 @@ export function LiveTrackingMap({
         zoomControl: true,
         scrollWheelZoom: true,
         attributionControl: false,
+        minZoom: 10,
+        maxZoom: 17,
       }).setView([pickup.lat, pickup.lng], 14);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-      }).addTo(map);
+      addMapTiles(map, L);
 
       L.circleMarker([pickup.lat, pickup.lng], {
         color: "#14B8A6", fillColor: "#14B8A6", fillOpacity: 0.85, radius: 8, weight: 2,

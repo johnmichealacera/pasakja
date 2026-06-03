@@ -7,6 +7,8 @@ import type * as Leaflet from "leaflet";
 import type { LatLng } from "@/components/maps/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { addMapTiles } from "@/lib/map-tiles";
+import { SOCORRO_PLACES } from "@/lib/socorro-places";
 
 type PickMode = "pickup" | "destination";
 
@@ -25,10 +27,13 @@ export function MapPicker({
   heightClassName = "h-[420px]",
   initialCenter,
   onChange,
+  destinationOverride,
 }: {
   heightClassName?: string;
   initialCenter?: LatLng;
   onChange?: (value: MapPickerValue) => void;
+  /** When set, programmatically moves the destination marker to this position. */
+  destinationOverride?: LatLng | null;
 }) {
   const mapElRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
@@ -71,6 +76,17 @@ export function MapPicker({
     lastEmittedRef.current = next;
     onChangeRef.current?.(next);
   }, [destination, pickup]);
+
+  // When the parent supplies a destinationOverride (e.g. from the place picker dropdown),
+  // update internal destination state and pan the map to that location.
+  useEffect(() => {
+    if (destinationOverride === undefined) return;
+    setDestination(destinationOverride);
+    if (destinationOverride && mapRef.current) {
+      mapRef.current.setView([destinationOverride.lat, destinationOverride.lng], 15);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destinationOverride?.lat, destinationOverride?.lng]);
 
   // GPS: set pickup from current location (once), snapped to road.
   useEffect(() => {
@@ -133,12 +149,61 @@ export function MapPicker({
         maxBounds: L.latLngBounds(SOCORRO_BOUNDS[0], SOCORRO_BOUNDS[1]),
         maxBoundsViscosity: 1.0,
         minZoom: 12,
+        maxZoom: 17,
       }).setView([center.lat, center.lng], 14);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
+      addMapTiles(map, L);
+
+      // ── Custom Socorro place markers ────────────────────────────────────
+      // Injects all barangay landmarks from socorro-places.ts so the map
+      // shows far more local labels than Mapbox's dataset provides.
+      // Hovering shows the place name + barangay; clicking sets destination.
+      if (!document.getElementById("socorro-label-css")) {
+        const s = document.createElement("style");
+        s.id = "socorro-label-css";
+        s.textContent = `
+          .socorro-label {
+            background: rgba(255,255,255,0.96) !important;
+            border: 1px solid #a78bfa !important;
+            border-radius: 4px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            color: #3b0764 !important;
+            white-space: nowrap !important;
+            padding: 3px 7px !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+          }
+          .socorro-label::before { display:none !important; }
+        `;
+        document.head.appendChild(s);
+      }
+
+      SOCORRO_PLACES.forEach((brgy) => {
+        brgy.places.forEach((place) => {
+          const dot = L.circleMarker([place.lat, place.lng], {
+            radius: 5,
+            color: "#7c3aed",
+            fillColor: "#8b5cf6",
+            fillOpacity: 0.85,
+            weight: 1.5,
+            bubblingMouseEvents: false,
+          })
+            .bindTooltip(
+              `<strong>${place.name}</strong><br>
+               <span style="color:#6b7280;font-size:10px">${brgy.barangay}</span>`,
+              { direction: "top", className: "socorro-label", offset: [0, -6] }
+            )
+            .addTo(map);
+
+          // Clicking a place dot sets it as destination directly (coords are
+          // already road-accurate; snapping is skipped intentionally).
+          dot.on("click", (e) => {
+            L.DomEvent.stopPropagation(e);
+            setDestination({ lat: place.lat, lng: place.lng });
+          });
+        });
+      });
+      // ────────────────────────────────────────────────────────────────────
 
       map.on("click", (e) => {
         const clicked: LatLng = {

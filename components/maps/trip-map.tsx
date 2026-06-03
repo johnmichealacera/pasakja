@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as Leaflet from "leaflet";
 import type { LatLng } from "@/components/maps/types";
+import { addMapTiles } from "@/lib/map-tiles";
 
 function formatLatLng(p: LatLng) {
   return `${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
@@ -58,11 +59,11 @@ export function TripMap({
       const map = L.map(mapElRef.current as HTMLDivElement, {
         zoomControl: true,
         scrollWheelZoom: true,
+        minZoom: 10,
+        maxZoom: 17,
       }).setView([center.lat, center.lng], 13);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
+      addMapTiles(map, L);
 
       mapRef.current = map;
     }
