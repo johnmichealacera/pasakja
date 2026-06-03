@@ -149,7 +149,7 @@ export function MapPicker({
         maxBounds: L.latLngBounds(SOCORRO_BOUNDS[0], SOCORRO_BOUNDS[1]),
         maxBoundsViscosity: 1.0,
         minZoom: 12,
-        maxZoom: 17,
+        maxZoom: 19,
       }).setView([center.lat, center.lng], 14);
 
       addMapTiles(map, L);

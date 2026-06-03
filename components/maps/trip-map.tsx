@@ -60,7 +60,7 @@ export function TripMap({
         zoomControl: true,
         scrollWheelZoom: true,
         minZoom: 10,
-        maxZoom: 17,
+        maxZoom: 19,
       }).setView([center.lat, center.lng], 13);
 
       addMapTiles(map, L);

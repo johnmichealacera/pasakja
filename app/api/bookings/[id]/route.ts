@@ -97,20 +97,22 @@ export async function PATCH(
         return NextResponse.json({ booking: updated });
       }
 
-      if (status === "CANCELLED") {
+      // Driver "releases" a booking — puts it back to PENDING so another driver
+      // can accept it. Only the passenger can truly cancel (status → CANCELLED).
+      if (status === "PENDING") {
         if (booking.driverId !== driver.id) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-        // Drivers may only cancel while status is ACCEPTED — not after picking up the passenger
         if (booking.status !== "ACCEPTED") {
           return NextResponse.json(
-            { error: "Cannot cancel after the passenger has been picked up" },
+            { error: "Cannot release after the passenger has been picked up" },
             { status: 400 }
           );
         }
         const updated = await prisma.booking.update({
           where: { id },
-          data: { status: "CANCELLED" },
+          // Remove the driver assignment and reset to open PENDING
+          data: { status: "PENDING", driverId: null },
         });
         await clearDriverLocation(driver.id);
         return NextResponse.json({ booking: updated });

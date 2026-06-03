@@ -27,7 +27,7 @@ export function addMapTiles(map: any, L: any): void {
     const mbOpts = {
       tileSize: 512,
       zoomOffset: -1,
-      maxZoom: 17,
+      maxZoom: 19,
       attribution: mbAttr,
     };
 
@@ -62,7 +62,7 @@ export function addMapTiles(map: any, L: any): void {
           '© <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors ' +
           '© <a href="https://carto.com/">CARTO</a>',
         subdomains: "abcd",
-        maxZoom: 17,
+        maxZoom: 19,
       }
     );
 
@@ -72,12 +72,12 @@ export function addMapTiles(map: any, L: any): void {
       {
         attribution:
           "Imagery © <a href='https://www.esri.com/'>Esri</a>",
-        maxZoom: 17,
+        maxZoom: 19,
       }
     );
     const esriLabels = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 17, attribution: "" }
+      { maxZoom: 19, attribution: "" }
     );
     const satelliteGroup = L.layerGroup([esriSat, esriLabels]);
 

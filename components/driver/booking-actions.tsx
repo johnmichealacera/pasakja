@@ -37,7 +37,8 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
           PICKED_UP: "Passenger picked up. Starting trip.",
           IN_PROGRESS: "Trip is in progress.",
           COMPLETED: "Trip completed!",
-          CANCELLED: "Booking cancelled.",
+          // PENDING means the driver released it back to the pool
+          PENDING: "Booking released — another driver can now accept it.",
         };
         toast.success(messages[status] ?? "Status updated");
         router.refresh();
@@ -73,16 +74,19 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
         <div className="flex flex-col gap-2 items-end">
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            Cancel this booking?
+            Release this booking?
           </span>
+          <p className="text-xs text-muted-foreground text-right max-w-[180px]">
+            The passenger stays in the queue — another driver can accept.
+          </p>
           <div className="flex gap-2">
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => updateStatus("CANCELLED")}
+              onClick={() => updateStatus("PENDING")}
               disabled={isLoading}
             >
-              {isLoading ? "Cancelling…" : "Yes, cancel"}
+              {isLoading ? "Releasing…" : "Yes, release"}
             </Button>
             <Button
               size="sm"
@@ -114,10 +118,10 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
           variant="ghost"
           onClick={() => setConfirmCancel(true)}
           disabled={isLoading}
-          className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
         >
           <XCircle className="h-4 w-4" />
-          Cancel
+          Can&apos;t Go
         </Button>
       </div>
     );

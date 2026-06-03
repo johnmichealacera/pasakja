@@ -88,7 +88,7 @@ export function LiveTrackingMap({
         scrollWheelZoom: true,
         attributionControl: false,
         minZoom: 10,
-        maxZoom: 17,
+        maxZoom: 19,
       }).setView([pickup.lat, pickup.lng], 14);
 
       addMapTiles(map, L);

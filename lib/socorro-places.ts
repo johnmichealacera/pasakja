@@ -20,27 +20,19 @@ export const SOCORRO_PLACES: SocorroBarangay[] = [
     barangay: "Poblacion (Town Proper)",
     places: [
       { name: "Municipal Hall",                        lat: 9.6181, lng: 125.9659 },
-      { name: "Public Market (Palengke)",              lat: 9.6248, lng: 125.9701 },
-      { name: "Port / Pier (Pantalan)",                lat: 9.6172, lng: 125.9665 },
+      { name: "Public Market (Palengke)",              lat: 9.6172, lng: 125.9665 },
+      { name: "Port / Pier (Pantalan)",                lat: 9.6168, lng: 125.9666 },
       { name: "Bucas Grande Foundation College",       lat: 9.6159, lng: 125.9630 },
       { name: "Socorro National High School",          lat: 9.6146, lng: 125.9631 },
       { name: "Socorro Central Elementary School",     lat: 9.6194, lng: 125.9646 },
       { name: "Municipal Plaza / Covered Court",       lat: 9.6184, lng: 125.9662 },
+      { name: "Rizal Gym",                             lat: 9.6241, lng: 125.9673 },
     ],
   },
   {
     barangay: "Songkoy",
     places: [
-      { name: "Songkoy Elementary School",                lat: 9.6303, lng: 125.9512 },
-      { name: "Bitaugan Elementary School",            lat: 9.6098, lng: 125.9598 },
-    ],
-  },
-  {
-    barangay: "Del Pilar",
-    places: [
-      { name: "Del Pilar Barangay Hall",               lat: 9.6282, lng: 125.9662 },
-      { name: "Del Pilar Elementary School",           lat: 9.6278, lng: 125.9658 },
-      { name: "Del Pilar Chapel",                      lat: 9.6280, lng: 125.9660 },
+      { name: "Songkoy Elementary School",             lat: 9.6303, lng: 125.9512 },
     ],
   },
   {
@@ -78,6 +70,18 @@ export const SOCORRO_PLACES: SocorroBarangay[] = [
     places: [
       { name: "Atoyay Elementary School",             lat: 9.6822, lng: 125.9353 },
       { name: "Atoyay National High School",          lat: 9.6811, lng: 125.9352 },
+    ],
+  },
+  {
+    barangay: "Sering",
+    places: [
+      { name: "Near North Sering Elementary School",  lat: 9.6843, lng: 125.9748 },
+    ],
+  },
+  {
+    barangay: "Sudlon",
+    places: [
+      { name: "Sudlon Elementary School",             lat: 9.6121, lng: 125.9393 },
     ],
   },
 ];
