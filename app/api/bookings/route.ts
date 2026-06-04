@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
       pickupLat, pickupLng, pickupAddress,
       dropoffLat, dropoffLng, dropoffAddress,
       paymentMethod, isShared, notes, quotedFare,
+      requestedDriverId,
     } = body;
 
     if (!pickupAddress || !dropoffAddress) {
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
         notes,
         quotedFare: quotedFare ?? null,
         fare: null,
+        requestedDriverId: requestedDriverId ?? null,
       },
     });
 

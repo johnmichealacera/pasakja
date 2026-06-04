@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Banknote, Smartphone, Users, CheckCircle, Loader2, MapPin } from "lucide-react";
+import { Banknote, Smartphone, Users, CheckCircle, Loader2, MapPin, Star, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-import { MapPicker, type MapPickerValue } from "@/components/maps/map-picker";
+import { MapPicker, type MapPickerValue, type DriverMarker } from "@/components/maps/map-picker";
 import { type SocorroPlace } from "@/lib/socorro-places";
 import { DestinationSearch } from "@/components/passenger/destination-search";
 
@@ -42,6 +42,10 @@ export default function BookRidePage() {
 
   // Selected destination from the quick-pick dropdown
   const [selectedPlace, setSelectedPlace] = useState<SocorroPlace | null>(null);
+
+  // Nearby available drivers
+  const [nearbyDrivers, setNearbyDrivers] = useState<DriverMarker[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<DriverMarker | null>(null);
 
   const handleMapChange = useCallback((v: MapPickerValue) => {
     setPicked((prev) => {
@@ -121,6 +125,10 @@ export default function BookRidePage() {
         });
       })
       .catch((err: unknown) => {
+        // Browsers sometimes throw TypeError instead of AbortError when the
+        // signal fires mid-stream (e.g. while reading the response body).
+        // Guard against both to prevent stale aborts showing the error banner.
+        if (ctrl.signal.aborted) return;
         if (err instanceof Error && err.name === "AbortError") return;
         setFareEstimate(null);
         setEstimateError("Failed to fetch route");
@@ -131,6 +139,48 @@ export default function BookRidePage() {
 
     return () => ctrl.abort();
   }, [picked.pickup?.lat, picked.pickup?.lng, picked.destination?.lat, picked.destination?.lng]);
+
+  // Poll nearby available drivers every 15 s whenever a pickup is set
+  useEffect(() => {
+    if (!picked.pickup) {
+      setNearbyDrivers([]);
+      return;
+    }
+    let active = true;
+
+    async function fetchDrivers() {
+      if (!active || !picked.pickup) return;
+      try {
+        const res = await fetch(
+          `/api/drivers/available?lat=${picked.pickup.lat}&lng=${picked.pickup.lng}`
+        );
+        if (!res.ok || !active) return;
+        const data = (await res.json()) as {
+          drivers: {
+            driverId: string; name: string; vehicleType: string;
+            vehicleModel: string; avgRating: number | null;
+            lat: number; lng: number; etaMinutes: number | null; distanceKm: number | null;
+          }[];
+        };
+        setNearbyDrivers(
+          data.drivers.map((d) => ({
+            driverId:    d.driverId,
+            name:        d.name,
+            vehicleType: d.vehicleType,
+            lat:         d.lat,
+            lng:         d.lng,
+            etaMinutes:  d.etaMinutes,
+          }))
+        );
+      } catch {
+        // ignore — stale data is fine
+      }
+    }
+
+    fetchDrivers();
+    const interval = setInterval(fetchDrivers, 15_000);
+    return () => { active = false; clearInterval(interval); };
+  }, [picked.pickup?.lat, picked.pickup?.lng]);
 
   function handleNotesChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setForm((prev) => ({ ...prev, notes: e.target.value }));
@@ -198,6 +248,7 @@ export default function BookRidePage() {
         dropoffLng: picked.destination!.lng,
         dropoffAddress,
         quotedFare: fareEstimate?.estimatedFare ?? null,
+        requestedDriverId: selectedDriver?.driverId ?? null,
       }),
     });
 
@@ -234,6 +285,7 @@ export default function BookRidePage() {
         notes: form.notes,
         estimatedFare: fareEstimate.estimatedFare,
         centavos: fareEstimate.centavos,
+        requestedDriverId: selectedDriver?.driverId ?? null,
       }),
     });
 
@@ -308,7 +360,80 @@ export default function BookRidePage() {
                 onChange={handleMapChange}
                 heightClassName="h-[320px] lg:h-[440px]"
                 destinationOverride={selectedPlace}
+                driverMarkers={nearbyDrivers}
+                onDriverSelect={(d) => {
+                  setSelectedDriver((prev) =>
+                    prev?.driverId === d.driverId ? null : d
+                  );
+                }}
               />
+
+              {/* Nearby drivers list */}
+              {nearbyDrivers.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <Navigation className="h-3.5 w-3.5" />
+                    {nearbyDrivers.length} driver{nearbyDrivers.length !== 1 ? "s" : ""} nearby
+                    {selectedDriver && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDriver(null)}
+                        className="ml-auto text-muted-foreground hover:text-foreground text-xs normal-case tracking-normal"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {nearbyDrivers.map((d) => {
+                      const isSelected = selectedDriver?.driverId === d.driverId;
+                      return (
+                        <button
+                          key={d.driverId}
+                          type="button"
+                          onClick={() =>
+                            setSelectedDriver((prev) =>
+                              prev?.driverId === d.driverId ? null : d
+                            )
+                          }
+                          className={cn(
+                            "w-full flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors text-left",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-accent/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "h-2 w-2 rounded-full animate-pulse",
+                              isSelected ? "bg-primary" : "bg-amber-400"
+                            )} />
+                            <div>
+                              <span className="font-medium">{d.name}</span>
+                              <span className="text-muted-foreground ml-1.5 text-xs">{d.vehicleType}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {d.etaMinutes !== null && (
+                              <Badge variant="secondary" className="text-xs">
+                                ~{d.etaMinutes} min
+                              </Badge>
+                            )}
+                            {isSelected && (
+                              <Badge className="text-xs">Selected</Badge>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedDriver && (
+                    <p className="text-xs text-primary font-medium">
+                      ✓ Booking will be sent to {selectedDriver.name} first
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

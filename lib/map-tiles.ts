@@ -45,13 +45,22 @@ export function addMapTiles(map: any, L: any): void {
 
     streetLayer.addTo(map);
 
-    L.control
+    const ctrl = L.control
       .layers(
         { "🗺 Street": streetLayer, "🛰 Satellite": satelliteLayer },
         {},
         { position: "topright", collapsed: false }
       )
       .addTo(map);
+
+    // Explicitly stop layer-control clicks from reaching the map click handler.
+    // Without this, clicking the radio buttons can fire handleMapClick and
+    // change the destination, triggering a spurious fare recalculation.
+    const ctrlContainer = ctrl.getContainer();
+    if (ctrlContainer) {
+      L.DomEvent.disableClickPropagation(ctrlContainer);
+      L.DomEvent.disableScrollPropagation(ctrlContainer);
+    }
   } else {
     // ── Fallback — no API key required ─────────────────────────────────────
     // CartoDB Voyager: colourful, detailed labels, free.
@@ -83,13 +92,19 @@ export function addMapTiles(map: any, L: any): void {
 
     streetLayer.addTo(map);
 
-    L.control
+    const ctrl2 = L.control
       .layers(
         { "🗺 Street": streetLayer, "🛰 Satellite": satelliteGroup },
         {},
         { position: "topright", collapsed: false }
       )
       .addTo(map);
+
+    const ctrl2Container = ctrl2.getContainer();
+    if (ctrl2Container) {
+      L.DomEvent.disableClickPropagation(ctrl2Container);
+      L.DomEvent.disableScrollPropagation(ctrl2Container);
+    }
   }
 }
 

@@ -77,3 +77,17 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+// Driver calls this when going offline to remove their live position
+export async function DELETE(_req: NextRequest) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = session.user as { id: string; role: string };
+  if (user.role !== "DRIVER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  await prisma.driverLocation.deleteMany({ where: { userId: user.id } });
+  return NextResponse.json({ ok: true });
+}

@@ -23,17 +23,31 @@ const SOCORRO_BOUNDS: [[number, number], [number, number]] = [
   [9.72, 126.07],
 ];
 
+export interface DriverMarker {
+  driverId: string;
+  name: string;
+  vehicleType: string;
+  lat: number;
+  lng: number;
+  etaMinutes: number | null;
+}
+
 export function MapPicker({
   heightClassName = "h-[420px]",
   initialCenter,
   onChange,
   destinationOverride,
+  driverMarkers = [],
+  onDriverSelect,
 }: {
   heightClassName?: string;
   initialCenter?: LatLng;
   onChange?: (value: MapPickerValue) => void;
-  /** When set, programmatically moves the destination marker to this position. */
   destinationOverride?: LatLng | null;
+  /** Live driver positions shown on the map as amber markers. */
+  driverMarkers?: DriverMarker[];
+  /** Called when the passenger taps a driver marker. */
+  onDriverSelect?: (driver: DriverMarker) => void;
 }) {
   const mapElRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
@@ -368,6 +382,56 @@ export function MapPicker({
       anyMap.__pasakja_route_line = line;
     }
   }, [route]);
+
+  // Draw / update nearby available driver markers
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletModuleRef.current;
+    if (!map || !L) return;
+
+    type AugMap = { __pasakja_drivers?: Leaflet.Layer[] };
+    const am = map as unknown as AugMap;
+
+    // Remove previous driver markers
+    (am.__pasakja_drivers ?? []).forEach((m) => map.removeLayer(m));
+    am.__pasakja_drivers = [];
+
+    if (!driverMarkers.length) return;
+
+    // Inject pulsing CSS for driver markers once
+    if (!document.getElementById("driver-marker-css")) {
+      const s = document.createElement("style");
+      s.id = "driver-marker-css";
+      s.textContent = `
+        @keyframes dp-ping {
+          0%{transform:scale(1);opacity:.6} 70%{transform:scale(2.2);opacity:0} 100%{transform:scale(2.2);opacity:0}
+        }
+        .dp-halo { position:absolute;inset:0;border-radius:50%;background:rgba(245,158,11,.4);animation:dp-ping 2s cubic-bezier(0,0,.2,1) infinite; }
+        .dp-dot  { position:absolute;inset:4px;border-radius:50%;background:#f59e0b;border:2px solid #fff;box-shadow:0 0 0 2px rgba(245,158,11,.4); }
+      `;
+      document.head.appendChild(s);
+    }
+
+    driverMarkers.forEach((d) => {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="position:relative;width:24px;height:24px;"><div class="dp-halo"></div><div class="dp-dot"></div></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const etaText = d.etaMinutes !== null ? `~${d.etaMinutes} min away` : "";
+      const tooltipHtml = `<strong>${d.name}</strong><br><span style="font-size:11px;color:#6b7280">${d.vehicleType}${etaText ? " · " + etaText : ""}</span>`;
+
+      const marker = L.marker([d.lat, d.lng], { icon })
+        .bindTooltip(tooltipHtml, { direction: "top", offset: [0, -14] })
+        .addTo(map);
+
+      marker.on("click", () => onDriverSelect?.(d));
+      am.__pasakja_drivers!.push(marker);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driverMarkers, onDriverSelect]);
 
   return (
     <div className="space-y-3">

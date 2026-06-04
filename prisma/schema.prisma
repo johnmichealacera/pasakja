@@ -165,8 +165,9 @@ model Booking {
   paymentMethod  PaymentMethod @default(CASH)
   paymentStatus  PaymentStatus @default(UNPAID)
   paymongoPaymentIntentId String?
-  isShared       Boolean       @default(false)
-  notes          String?
+  isShared           Boolean       @default(false)
+  requestedDriverId  String?       // passenger's preferred driver; nil = open to all
+  notes              String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

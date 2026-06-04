@@ -40,7 +40,11 @@ export default async function DriverBookingsPage() {
     prisma.booking.findMany({
       where: { status: "PENDING", driverId: null },
       include: { passenger: { include: { user: true } } },
-      orderBy: { createdAt: "desc" },
+      // Bookings requested for this driver appear first
+      orderBy: [
+        { requestedDriverId: "desc" },
+        { createdAt: "desc" },
+      ],
     }),
     prisma.booking.findMany({
       where: {
@@ -182,9 +186,21 @@ export default async function DriverBookingsPage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {pendingBookings.map((booking) => (
-              <Card key={booking.id} className="hover:shadow-md transition-shadow">
+            {pendingBookings.map((booking) => {
+              const isRequestedForMe = booking.requestedDriverId === driver.id;
+              return (
+              <Card
+                key={booking.id}
+                className={isRequestedForMe
+                  ? "border-amber-400 ring-1 ring-amber-300 hover:shadow-md transition-shadow"
+                  : "hover:shadow-md transition-shadow"}
+              >
                 <CardContent className="p-4">
+                  {isRequestedForMe && (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mb-3">
+                      <span>⭐</span> Passenger requested you specifically
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
@@ -241,7 +257,8 @@ export default async function DriverBookingsPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
