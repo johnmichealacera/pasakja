@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { MapPicker, type MapPickerValue } from "@/components/maps/map-picker";
-import { SOCORRO_PLACES, type SocorroPlace } from "@/lib/socorro-places";
+import { type SocorroPlace } from "@/lib/socorro-places";
+import { DestinationSearch } from "@/components/passenger/destination-search";
 
 type PaymentMethod = "CASH" | "ONLINE";
 
@@ -144,20 +145,31 @@ export default function BookRidePage() {
     setIsLoading(true);
 
     try {
+      // When destination was chosen from the dropdown we already have its exact
+      // name — no need to reverse-geocode it. Only geocode if manually clicked.
       const [pickupGeoRes, destinationGeoRes] = await Promise.all([
         fetch(`/api/maps/reverse?lat=${picked.pickup.lat}&lng=${picked.pickup.lng}`),
-        fetch(`/api/maps/reverse?lat=${picked.destination.lat}&lng=${picked.destination.lng}`),
+        selectedPlace
+          ? Promise.resolve<Response | null>(null)
+          : fetch(`/api/maps/reverse?lat=${picked.destination.lat}&lng=${picked.destination.lng}`),
       ]);
 
-      const pickupGeoData = pickupGeoRes.ok
+      const pickupGeoData = pickupGeoRes?.ok
         ? ((await pickupGeoRes.json()) as { address?: string | null })
         : null;
-      const destinationGeoData = destinationGeoRes.ok
-        ? ((await destinationGeoRes.json()) as { address?: string | null })
-        : null;
 
-      const pickupAddress = pickupGeoData?.address?.trim() || "GPS Pickup";
-      const dropoffAddress = destinationGeoData?.address?.trim() || "Selected Destination";
+      const pickupAddress = pickupGeoData?.address?.trim() || "Socorro, Surigao del Norte";
+
+      let dropoffAddress: string;
+      if (selectedPlace) {
+        // Use the human-readable place name from the dropdown
+        dropoffAddress = `${selectedPlace.name}, Socorro, Surigao del Norte`;
+      } else {
+        const destData = destinationGeoRes?.ok
+          ? ((await destinationGeoRes.json()) as { address?: string | null })
+          : null;
+        dropoffAddress = destData?.address?.trim() || "Socorro, Surigao del Norte";
+      }
 
       if (paymentMethod === "ONLINE") {
         await handleGcashCheckout(pickupAddress, dropoffAddress);
@@ -276,64 +288,17 @@ export default function BookRidePage() {
               <CardDescription>Where are you going?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* ── Destination quick-pick dropdown ── */}
+              {/* ── Destination searchable picker ── */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-primary" />
                   Select Destination
                 </label>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={
-                    selectedPlace
-                      ? `${selectedPlace.lat},${selectedPlace.lng}`
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val) {
-                      setSelectedPlace(null);
-                      return;
-                    }
-                    const [latStr, lngStr] = val.split(",");
-                    const lat = parseFloat(latStr);
-                    const lng = parseFloat(lngStr);
-                    // Find the matching place object for the display name
-                    for (const brgy of SOCORRO_PLACES) {
-                      const found = brgy.places.find(
-                        (p) => p.lat === lat && p.lng === lng
-                      );
-                      if (found) {
-                        setSelectedPlace(found);
-                        break;
-                      }
-                    }
-                  }}
-                >
-                  <option value="">— Choose a notable place —</option>
-                  {SOCORRO_PLACES.map((brgy) => (
-                    <optgroup key={brgy.barangay} label={`📍 ${brgy.barangay}`}>
-                      {brgy.places.map((place) => (
-                        <option
-                          key={`${place.lat},${place.lng}`}
-                          value={`${place.lat},${place.lng}`}
-                        >
-                          {place.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-
-                {selectedPlace && (
-                  <div className="flex items-center justify-between text-xs text-muted-foreground bg-primary/5 rounded-md px-2.5 py-1.5 border border-primary/20">
-                    <span className="font-medium text-foreground">{selectedPlace.name}</span>
-                    <span className="font-mono">
-                      {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
-                    </span>
-                  </div>
-                )}
-
+                <DestinationSearch
+                  value={selectedPlace}
+                  onSelect={setSelectedPlace}
+                  disabled={isLoading}
+                />
                 <p className="text-xs text-muted-foreground">
                   Or click anywhere on the map below to set a custom destination.
                 </p>
