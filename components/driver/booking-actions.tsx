@@ -17,9 +17,16 @@ interface BookingActionsProps {
   isPending?: boolean;
   /** True when this booking was specifically requested for this driver. */
   isRequested?: boolean;
+  /** False when the driver already has an active trip — cannot accept new bookings. */
+  canAcceptNewBookings?: boolean;
 }
 
-export function BookingActions({ booking, isPending, isRequested }: BookingActionsProps) {
+export function BookingActions({
+  booking,
+  isPending,
+  isRequested,
+  canAcceptNewBookings = true,
+}: BookingActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -81,6 +88,14 @@ export function BookingActions({ booking, isPending, isRequested }: BookingActio
 
   // Requested booking: show confirmation UI for reject
   if (isPending && isRequested) {
+    if (!canAcceptNewBookings) {
+      return (
+        <p className="text-xs text-muted-foreground text-right max-w-[200px]">
+          Complete your current trip before accepting another booking.
+        </p>
+      );
+    }
+
     if (confirmReject) {
       return (
         <div className="flex flex-col gap-2 items-end">
@@ -141,6 +156,14 @@ export function BookingActions({ booking, isPending, isRequested }: BookingActio
 
   // Regular open booking: just Accept
   if (isPending) {
+    if (!canAcceptNewBookings) {
+      return (
+        <p className="text-xs text-muted-foreground text-right max-w-[200px]">
+          Complete your current trip before accepting another booking.
+        </p>
+      );
+    }
+
     return (
       <Button
         size="sm"

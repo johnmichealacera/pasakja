@@ -2,6 +2,10 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createPaymentIntent } from "@/lib/paymongo";
+import {
+  PASSENGER_HAS_OPEN_BOOKING_MESSAGE,
+  passengerOpenBookingWhere,
+} from "@/lib/booking-guards";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -66,23 +70,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        passengerId: passenger.id,
-        pickupLat,
-        pickupLng,
-        pickupAddress,
-        dropoffLat,
-        dropoffLng,
-        dropoffAddress,
-        paymentMethod: "ONLINE",
-        paymentStatus: "UNPAID",
-        isShared: isShared ?? false,
-        notes: notes ?? null,
-        fare: estimatedFare,
-        quotedFare: estimatedFare,
-      },
-    });
+    let booking;
+    try {
+      booking = await prisma.$transaction(async (tx) => {
+        const existing = await tx.booking.findFirst({
+          where: passengerOpenBookingWhere(passenger.id),
+          select: { id: true },
+        });
+        if (existing) {
+          throw new Error("PASSENGER_BUSY");
+        }
+
+        return tx.booking.create({
+          data: {
+            passengerId: passenger.id,
+            pickupLat,
+            pickupLng,
+            pickupAddress,
+            dropoffLat,
+            dropoffLng,
+            dropoffAddress,
+            paymentMethod: "ONLINE",
+            paymentStatus: "UNPAID",
+            isShared: isShared ?? false,
+            notes: notes ?? null,
+            fare: estimatedFare,
+            quotedFare: estimatedFare,
+          },
+        });
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === "PASSENGER_BUSY") {
+        return NextResponse.json(
+          { error: PASSENGER_HAS_OPEN_BOOKING_MESSAGE },
+          { status: 409 },
+        );
+      }
+      throw err;
+    }
 
     const pi = await createPaymentIntent(centavos, {
       bookingId: booking.id,

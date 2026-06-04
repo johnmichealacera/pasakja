@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
-
-
 import { prisma } from "@/lib/prisma";
+import { driverActiveBookingWhere } from "@/lib/booking-guards";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +31,7 @@ function PendingBookingCard({
   booking,
   driverId,
   isRequested,
+  canAcceptNewBookings,
 }: {
   booking: {
     id: string;
@@ -47,6 +47,7 @@ function PendingBookingCard({
   };
   driverId: string;
   isRequested: boolean;
+  canAcceptNewBookings: boolean;
 }) {
   return (
     <Card className={isRequested
@@ -105,6 +106,7 @@ function PendingBookingCard({
             driverId={driverId}
             isPending
             isRequested={isRequested}
+            canAcceptNewBookings={canAcceptNewBookings}
           />
         </div>
       </CardContent>
@@ -141,14 +143,13 @@ export default async function DriverBookingsPage() {
       ],
     }),
     prisma.booking.findMany({
-      where: {
-        driverId: driver.id,
-        status: { in: ["ACCEPTED", "PICKED_UP", "IN_PROGRESS"] },
-      },
+      where: driverActiveBookingWhere(driver.id),
       include: { passenger: { include: { user: true } } },
       orderBy: { createdAt: "desc" },
     }),
   ]);
+
+  const canAcceptNewBookings = myBookings.length === 0;
 
   // Split pending into requested-for-me and open-to-all
   const requestedBookings = pendingBookings.filter(
@@ -295,6 +296,7 @@ export default async function DriverBookingsPage() {
                 booking={booking}
                 driverId={driver.id}
                 isRequested
+                canAcceptNewBookings={canAcceptNewBookings}
               />
             ))}
           </div>
@@ -322,6 +324,7 @@ export default async function DriverBookingsPage() {
                 booking={booking}
                 driverId={driver.id}
                 isRequested={false}
+                canAcceptNewBookings={canAcceptNewBookings}
               />
             ))}
           </div>

@@ -2,6 +2,10 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { driverAmount, platformFee } from "@/lib/commission";
+import {
+  DRIVER_HAS_ACTIVE_BOOKING_MESSAGE,
+  driverActiveBookingWhere,
+} from "@/lib/booking-guards";
 
 export async function PATCH(
   req: NextRequest,
@@ -55,11 +59,63 @@ export async function PATCH(
       }
 
       if (status === "ACCEPTED") {
-        const updated = await prisma.booking.update({
-          where: { id },
-          data: { status: "ACCEPTED", driverId: driver.id },
-        });
-        return NextResponse.json({ booking: updated });
+        if (booking.status !== "PENDING" || booking.driverId !== null) {
+          return NextResponse.json(
+            { error: "This booking is no longer available" },
+            { status: 409 },
+          );
+        }
+        if (
+          booking.requestedDriverId &&
+          booking.requestedDriverId !== driver.id
+        ) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        let accepted;
+        try {
+          accepted = await prisma.$transaction(async (tx) => {
+            const activeForDriver = await tx.booking.findFirst({
+              where: driverActiveBookingWhere(driver.id),
+              select: { id: true },
+            });
+            if (activeForDriver) {
+              throw new Error("DRIVER_BUSY");
+            }
+
+            const result = await tx.booking.updateMany({
+              where: {
+                id,
+                status: "PENDING",
+                driverId: null,
+              },
+              data: { status: "ACCEPTED", driverId: driver.id },
+            });
+            if (result.count === 0) {
+              throw new Error("BOOKING_UNAVAILABLE");
+            }
+
+            return tx.booking.findUnique({ where: { id } });
+          });
+        } catch (err) {
+          if (err instanceof Error) {
+            if (err.message === "DRIVER_BUSY") {
+              return NextResponse.json(
+                { error: DRIVER_HAS_ACTIVE_BOOKING_MESSAGE },
+                { status: 409 },
+              );
+            }
+            if (err.message === "BOOKING_UNAVAILABLE") {
+              return NextResponse.json(
+                { error: "This booking was just taken by another driver" },
+                { status: 409 },
+              );
+            }
+          }
+          throw err;
+        }
+
+        return NextResponse.json({ booking: accepted });
       }
 
       if (status === "PICKED_UP" || status === "IN_PROGRESS") {

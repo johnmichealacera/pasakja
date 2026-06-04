@@ -2,7 +2,9 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const ACTIVE_STATUSES = ["ACCEPTED", "PICKED_UP", "IN_PROGRESS"] as const;
+import { DRIVER_ACTIVE_BOOKING_STATUSES } from "@/lib/booking-guards";
+
+const ACTIVE_STATUSES = DRIVER_ACTIVE_BOOKING_STATUSES;
 
 export async function POST(req: NextRequest) {
   const session = await auth();
