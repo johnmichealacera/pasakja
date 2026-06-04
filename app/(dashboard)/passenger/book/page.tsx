@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { MapPicker, type MapPickerValue, type DriverMarker } from "@/components/maps/map-picker";
 import { type SocorroPlace } from "@/lib/socorro-places";
 import { DestinationSearch } from "@/components/passenger/destination-search";
+import { vehicleLabel } from "@/lib/vehicle-types";
 
 type PaymentMethod = "CASH" | "ONLINE";
 
@@ -410,7 +411,7 @@ export default function BookRidePage() {
                             )} />
                             <div>
                               <span className="font-medium">{d.name}</span>
-                              <span className="text-muted-foreground ml-1.5 text-xs">{d.vehicleType}</span>
+                              <span className="text-muted-foreground ml-1.5 text-xs">{vehicleLabel(d.vehicleType)}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">

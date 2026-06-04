@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, XCircle, AlertTriangle } from "lucide-react";
+import { Star, MapPin, XCircle, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { LiveTrackingMap } from "@/components/maps/live-tracking-map";
 
@@ -32,6 +32,31 @@ export function TripsClient({
 
   const [showMap, setShowMap] = useState(false);
   const [showRating, setShowRating] = useState(false);
+
+  // Poll driver ETA while the booking is ACCEPTED (driver en route to pickup)
+  const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (status !== "ACCEPTED") {
+      setEtaMinutes(null);
+      return;
+    }
+    let active = true;
+
+    async function pollEta() {
+      if (!active) return;
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/driver-location`);
+        if (!res.ok || !active) return;
+        const data = (await res.json()) as { etaMinutes?: number | null };
+        setEtaMinutes(data.etaMinutes ?? null);
+      } catch { /* ignore */ }
+    }
+
+    pollEta();
+    const interval = setInterval(pollEta, 10_000);
+    return () => { active = false; clearInterval(interval); };
+  }, [bookingId, status]);
 
   async function handleCancel() {
     setCancelling(true);
@@ -91,6 +116,44 @@ export function TripsClient({
     <>
       {isActive && (
         <div className="mt-3 space-y-3">
+          {/* ETA chip — only shown while driver is en route to pickup */}
+          {status === "ACCEPTED" && (
+            <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${
+              etaMinutes !== null
+                ? "bg-amber-50 border-amber-200 text-amber-800"
+                : "bg-muted border-border text-muted-foreground"
+            }`}>
+              <Clock className="h-3.5 w-3.5" />
+              {etaMinutes !== null
+                ? `Driver is ~${etaMinutes} min away`
+                : "Driver is on the way…"}
+              {etaMinutes !== null && (
+                <span className="relative flex h-2 w-2 ml-0.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600" />
+                </span>
+              )}
+            </div>
+          )}
+
+          {status === "PICKED_UP" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium bg-blue-50 border-blue-200 text-blue-800">
+              <Clock className="h-3.5 w-3.5" />
+              Driver has arrived — heading to destination
+            </div>
+          )}
+
+          {status === "IN_PROGRESS" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium bg-green-50 border-green-200 text-green-800">
+              <Clock className="h-3.5 w-3.5" />
+              Ride in progress
+              <span className="relative flex h-2 w-2 ml-0.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600" />
+              </span>
+            </div>
+          )}
+
           <Button
             variant="outline"
             size="sm"

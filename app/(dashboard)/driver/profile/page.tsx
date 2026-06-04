@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileImageUpload } from "@/components/profile-image-upload";
 import { Mail, Phone, Car, Star } from "lucide-react";
+import { vehicleLabel } from "@/lib/vehicle-types";
 import { format } from "date-fns";
 
 const statusVariantMap = {
@@ -108,7 +109,7 @@ export default async function DriverProfilePage() {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-muted-foreground text-xs">Type</p>
-              <p className="font-medium">{driver.vehicleType}</p>
+              <p className="font-medium">{vehicleLabel(driver.vehicleType)}</p>
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Model</p>

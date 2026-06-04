@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { DriverAvailabilityToggle } from "@/components/driver/availability-toggle";
+import { vehicleLabel } from "@/lib/vehicle-types";
 
 export default async function DriverDashboard() {
   const session = await auth();
@@ -167,7 +168,7 @@ export default async function DriverDashboard() {
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Type</p>
-              <p className="font-medium">{driver.vehicleType}</p>
+              <p className="font-medium">{vehicleLabel(driver.vehicleType)}</p>
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Plate Number</p>

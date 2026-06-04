@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Car, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { DocumentUploadRegistration, type PendingDoc } from "@/components/driver/document-upload-registration";
+import { VEHICLE_TYPES, VEHICLE_ICONS } from "@/lib/vehicle-types";
 
 function RegisterForm() {
   const router = useRouter();
@@ -195,15 +196,24 @@ function RegisterForm() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="vehicleType">Vehicle Type</Label>
-                      <Input
+                      <select
                         id="vehicleType"
                         name="vehicleType"
-                        placeholder="e.g. Tricycle"
                         value={form.vehicleType}
-                        onChange={handleChange}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, vehicleType: e.target.value }))
+                        }
                         required={role === "DRIVER"}
                         disabled={isLoading}
-                      />
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:opacity-50"
+                      >
+                        <option value="">Select type…</option>
+                        {VEHICLE_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {VEHICLE_ICONS[t]} {t}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="vehiclePlate">Plate Number</Label>

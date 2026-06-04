@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, Car, Star } from "lucide-react";
 import { DriverVerificationActions } from "@/components/admin/driver-verification-actions";
 import { DriverDocumentsViewer } from "@/components/admin/driver-documents-viewer";
+import { vehicleLabel } from "@/lib/vehicle-types";
 import { format } from "date-fns";
 
 export default async function AdminDriversPage() {
@@ -98,7 +99,7 @@ export default async function AdminDriversPage() {
                       </div>
                       <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Car className="h-3 w-3" /> {driver.vehicleModel} ({driver.vehicleType})
+                          <Car className="h-3 w-3" /> {driver.vehicleModel} · {vehicleLabel(driver.vehicleType)}
                         </span>
                         <span>Plate: {driver.vehiclePlate}</span>
                         <span>{driver._count.bookings} trips</span>

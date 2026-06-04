@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { addMapTiles } from "@/lib/map-tiles";
 import { SOCORRO_PLACES } from "@/lib/socorro-places";
+import { vehicleLabel } from "@/lib/vehicle-types";
 
 type PickMode = "pickup" | "destination";
 
@@ -421,7 +422,7 @@ export function MapPicker({
       });
 
       const etaText = d.etaMinutes !== null ? `~${d.etaMinutes} min away` : "";
-      const tooltipHtml = `<strong>${d.name}</strong><br><span style="font-size:11px;color:#6b7280">${d.vehicleType}${etaText ? " · " + etaText : ""}</span>`;
+      const tooltipHtml = `<strong>${d.name}</strong><br><span style="font-size:11px;color:#6b7280">${vehicleLabel(d.vehicleType)}${etaText ? " · " + etaText : ""}</span>`;
 
       const marker = L.marker([d.lat, d.lng], { icon })
         .bindTooltip(tooltipHtml, { direction: "top", offset: [0, -14] })

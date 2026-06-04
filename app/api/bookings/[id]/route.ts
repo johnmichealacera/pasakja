@@ -38,6 +38,22 @@ export async function PATCH(
       const driver = await prisma.driver.findUnique({ where: { userId: user.id } });
       if (!driver) return NextResponse.json({ error: "Driver not found" }, { status: 404 });
 
+      // Driver rejects a booking that was specifically requested for them.
+      // This clears requestedDriverId so the booking becomes visible to all drivers.
+      if (body.action === "reject_request") {
+        if (booking.requestedDriverId !== driver.id) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        if (booking.status !== "PENDING" || booking.driverId !== null) {
+          return NextResponse.json({ error: "Booking is no longer in a rejectable state" }, { status: 400 });
+        }
+        const updated = await prisma.booking.update({
+          where: { id },
+          data: { requestedDriverId: null }, // open to all drivers now
+        });
+        return NextResponse.json({ booking: updated });
+      }
+
       if (status === "ACCEPTED") {
         const updated = await prisma.booking.update({
           where: { id },

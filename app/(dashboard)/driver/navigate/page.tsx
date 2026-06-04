@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation, Phone } from "lucide-react";
 import { TripMap } from "@/components/maps/trip-map";
+import { PickupEtaChip } from "@/components/driver/pickup-eta-chip";
 
 export default async function DriverNavigatePage() {
   const session = await auth();
@@ -46,15 +47,22 @@ export default async function DriverNavigatePage() {
         <>
           <Card className="border-primary">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
                 <CardTitle className="text-base">Active Trip</CardTitle>
-                <Badge>
-                  {activeBooking.status === "ACCEPTED"
-                    ? "Going to Pickup"
-                    : activeBooking.status === "PICKED_UP"
-                    ? "Heading to Destination"
-                    : "In Progress"}
-                </Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge>
+                    {activeBooking.status === "ACCEPTED"
+                      ? "Going to Pickup"
+                      : activeBooking.status === "PICKED_UP"
+                      ? "Heading to Destination"
+                      : "In Progress"}
+                  </Badge>
+                  <PickupEtaChip
+                    pickupLat={activeBooking.pickupLat}
+                    pickupLng={activeBooking.pickupLng}
+                    status={activeBooking.status}
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

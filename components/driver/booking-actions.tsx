@@ -15,12 +15,15 @@ interface BookingActionsProps {
   };
   driverId: string;
   isPending?: boolean;
+  /** True when this booking was specifically requested for this driver. */
+  isRequested?: boolean;
 }
 
-export function BookingActions({ booking, isPending }: BookingActionsProps) {
+export function BookingActions({ booking, isPending, isRequested }: BookingActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmReject, setConfirmReject] = useState(false);
 
   async function updateStatus(status: string, extraData?: Record<string, unknown>) {
     setIsLoading(true);
@@ -37,7 +40,6 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
           PICKED_UP: "Passenger picked up. Starting trip.",
           IN_PROGRESS: "Trip is in progress.",
           COMPLETED: "Trip completed!",
-          // PENDING means the driver released it back to the pool
           PENDING: "Booking released — another driver can now accept it.",
         };
         toast.success(messages[status] ?? "Status updated");
@@ -54,6 +56,90 @@ export function BookingActions({ booking, isPending }: BookingActionsProps) {
     }
   }
 
+  async function rejectRequest() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject_request" }),
+      });
+      if (res.ok) {
+        toast.info("Request declined — booking is now open to other drivers.");
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error((data as { error?: string }).error ?? "Failed to decline request");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
+      setConfirmReject(false);
+    }
+  }
+
+  // Requested booking: show confirmation UI for reject
+  if (isPending && isRequested) {
+    if (confirmReject) {
+      return (
+        <div className="flex flex-col gap-2 items-end">
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            Decline this request?
+          </span>
+          <p className="text-xs text-muted-foreground text-right max-w-[180px]">
+            The booking will open to all available drivers.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive border-destructive hover:bg-destructive/10"
+              onClick={rejectRequest}
+              disabled={isLoading}
+            >
+              {isLoading ? "Declining…" : "Yes, decline"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setConfirmReject(false)}
+              disabled={isLoading}
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex gap-2 flex-wrap justify-end">
+        <Button
+          size="sm"
+          onClick={() => updateStatus("ACCEPTED")}
+          disabled={isLoading}
+          className="gap-1.5 bg-green-600 hover:bg-green-700"
+        >
+          <CheckCircle className="h-4 w-4" />
+          Accept
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setConfirmReject(true)}
+          disabled={isLoading}
+          className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/40"
+        >
+          <XCircle className="h-4 w-4" />
+          Decline
+        </Button>
+      </div>
+    );
+  }
+
+  // Regular open booking: just Accept
   if (isPending) {
     return (
       <Button
