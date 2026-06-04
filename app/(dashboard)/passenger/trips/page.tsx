@@ -137,6 +137,10 @@ export default async function TripsPage() {
                     hasRating={!!booking.rating}
                     pickup={{ lat: booking.pickupLat, lng: booking.pickupLng }}
                     destination={{ lat: booking.dropoffLat, lng: booking.dropoffLng }}
+                    paymentMethod={booking.paymentMethod}
+                    paymentStatus={booking.paymentStatus}
+                    disputeStatus={booking.disputeStatus}
+                    updatedAt={booking.updatedAt.toISOString()}
                   />
                 </CardContent>
               </Card>

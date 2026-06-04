@@ -1,30 +1,123 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, MapPin, Clock, User } from "lucide-react";
+import { AlertTriangle, CheckCircle, MapPin, Clock, User, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { SosActions } from "./sos-actions";
+import { DisputeActions } from "@/components/admin/dispute-actions";
 
 export default async function AdminSosPage() {
-  const alerts = await prisma.sosAlert.findMany({
-    orderBy: [{ isResolved: "asc" }, { createdAt: "desc" }],
-    include: {
-      passenger: {
-        include: { user: { select: { name: true, phone: true, email: true } } },
+  const [alerts, disputes] = await Promise.all([
+    prisma.sosAlert.findMany({
+      orderBy: [{ isResolved: "asc" }, { createdAt: "desc" }],
+      include: {
+        passenger: {
+          include: { user: { select: { name: true, phone: true, email: true } } },
+        },
       },
-    },
-  });
+    }),
+    prisma.booking.findMany({
+      where: { disputeStatus: { in: ["REQUESTED", "REFUNDED", "DENIED"] } },
+      orderBy: [{ disputeAt: "desc" }],
+      include: {
+        passenger: { include: { user: { select: { name: true, phone: true } } } },
+        driver: { include: { user: { select: { name: true } } } },
+      },
+    }),
+  ]);
 
   const unresolvedCount = alerts.filter((a) => !a.isResolved).length;
+  const pendingDisputes = disputes.filter((d) => d.disputeStatus === "REQUESTED").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* ── Payment Disputes ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <ShieldAlert className="h-5 w-5 text-amber-600" />
+          <h2 className="text-2xl font-bold">Payment Disputes</h2>
+          {pendingDisputes > 0 && (
+            <Badge variant="destructive" className="ml-1">{pendingDisputes} pending</Badge>
+          )}
+        </div>
+        <p className="text-muted-foreground mb-4">
+          GCash trip refund requests from passengers. Review and approve or deny.
+        </p>
+
+        {disputes.length === 0 ? (
+          <Card>
+            <CardContent className="p-10 text-center">
+              <CheckCircle className="h-10 w-10 mx-auto text-green-500 mb-3" />
+              <p className="text-muted-foreground">No payment disputes.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {disputes.map((d) => (
+              <Card
+                key={d.id}
+                className={d.disputeStatus === "REQUESTED" ? "border-amber-400" : "opacity-70"}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge
+                          variant={
+                            d.disputeStatus === "REQUESTED" ? "destructive" :
+                            d.disputeStatus === "REFUNDED" ? "default" : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {d.disputeStatus === "REQUESTED" && "⏳ Pending Review"}
+                          {d.disputeStatus === "REFUNDED"  && "✓ Refunded"}
+                          {d.disputeStatus === "DENIED"    && "✗ Denied"}
+                        </Badge>
+                        <span className="text-sm font-medium">{d.passenger.user.name}</span>
+                        {d.driver && (
+                          <span className="text-xs text-muted-foreground">
+                            vs driver {d.driver.user.name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Fare: <strong>₱{Number(d.fare ?? d.quotedFare ?? 0).toFixed(2)}</strong>
+                        {" · "}
+                        {d.pickupAddress} → {d.dropoffAddress}
+                      </p>
+                      {d.disputeReason && (
+                        <div className="text-xs bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 text-amber-800 mt-1">
+                          <span className="font-semibold">Reason: </span>{d.disputeReason}
+                        </div>
+                      )}
+                      {d.disputeAt && (
+                        <p className="text-xs text-muted-foreground">
+                          Submitted: {format(new Date(d.disputeAt), "MMM d, yyyy h:mm a")}
+                        </p>
+                      )}
+                      {d.refundId && (
+                        <p className="text-xs text-green-700">
+                          Refund ID: <span className="font-mono">{d.refundId}</span>
+                        </p>
+                      )}
+                    </div>
+                    {d.disputeStatus === "REQUESTED" && (
+                      <DisputeActions bookingId={d.id} />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── SOS Alerts ── */}
       <div>
         <h2 className="text-2xl font-bold">SOS Alerts</h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           {unresolvedCount} unresolved · {alerts.length} total
         </p>
-      </div>
 
       {alerts.length === 0 ? (
         <Card>
@@ -107,6 +200,7 @@ export default async function AdminSosPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

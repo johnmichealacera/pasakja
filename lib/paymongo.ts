@@ -66,3 +66,41 @@ export async function createPaymentIntent(
 export async function retrievePaymentIntent(id: string) {
   return paymongoRequest<PaymongoPaymentIntent>(`/payment_intents/${id}`);
 }
+
+/** Get the first succeeded payment ID from a payment intent. */
+export async function getPaymentIdFromIntent(piId: string): Promise<string | null> {
+  const pi = await retrievePaymentIntent(piId);
+  const payments = pi.data.attributes.payments ?? [];
+  const paid = payments.find((p) => p.attributes.status === "paid" || p.attributes.status === "chargeable");
+  return paid?.id ?? null;
+}
+
+export interface PaymongoRefund {
+  data: { id: string; attributes: { amount: number; status: string; reason: string } };
+}
+
+/**
+ * Issue a refund via PayMongo.
+ * @param paymentId  The pay_xxx ID (from the payment intent's payments array)
+ * @param amountCentavos  Amount to refund in Philippine centavos (100 = ₱1)
+ * @param reason  PayMongo reason: "others" | "duplicate" | "fraudulent"
+ */
+export async function issueRefund(
+  paymentId: string,
+  amountCentavos: number,
+  reason: "others" | "duplicate" | "fraudulent" = "others",
+): Promise<PaymongoRefund> {
+  return paymongoRequest<PaymongoRefund>("/refunds", {
+    method: "POST",
+    body: {
+      data: {
+        attributes: {
+          amount: amountCentavos,
+          payment_id: paymentId,
+          reason,
+          notes: "Pasakja ride refund",
+        },
+      },
+    },
+  });
+}

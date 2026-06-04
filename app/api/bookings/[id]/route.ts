@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { driverAmount, platformFee } from "@/lib/commission";
+import { getPaymentIdFromIntent, issueRefund } from "@/lib/paymongo";
 import {
   DRIVER_HAS_ACTIVE_BOOKING_MESSAGE,
   driverActiveBookingWhere,
@@ -215,8 +216,35 @@ export async function PATCH(
           where: { id },
           data: { status: "CANCELLED" },
         });
-        // Clear any live location the driver may have posted
         if (booking.driverId) await clearDriverLocation(booking.driverId);
+
+        // Auto-refund: GCash booking cancelled before pickup → refund immediately
+        if (
+          booking.paymentMethod === "ONLINE" &&
+          booking.paymentStatus === "PAID" &&
+          booking.paymongoPaymentIntentId
+        ) {
+          try {
+            const payId = await getPaymentIdFromIntent(booking.paymongoPaymentIntentId);
+            if (payId) {
+              const amountCentavos = Math.round(Number(booking.fare ?? booking.quotedFare ?? 0) * 100);
+              if (amountCentavos > 0) {
+                const refund = await issueRefund(payId, amountCentavos, "others");
+                await prisma.booking.update({
+                  where: { id },
+                  data: {
+                    paymentStatus: "REFUNDED",
+                    refundId: refund.data.id,
+                  },
+                });
+              }
+            }
+          } catch (refundErr) {
+            // Log but don't fail the cancellation — admin can issue manual refund
+            console.error("Auto-refund failed:", refundErr);
+          }
+        }
+
         return NextResponse.json({ booking: updated });
       }
     }

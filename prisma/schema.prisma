@@ -26,6 +26,13 @@ enum RemittanceStatus {
   PAID
 }
 
+enum DisputeStatus {
+  NONE       // no dispute
+  REQUESTED  // passenger requested a refund
+  REFUNDED   // admin approved and PayMongo refund issued
+  DENIED     // admin denied the request
+}
+
 enum BookingStatus {
   PENDING
   ACCEPTED
@@ -190,6 +197,11 @@ model Booking {
   isShared           Boolean       @default(false)
   requestedDriverId  String?       // passenger's preferred driver; nil = open to all
   notes              String?
+  // Passenger dispute / refund tracking (GCash bookings only)
+  disputeStatus  DisputeStatus @default(NONE)
+  disputeReason  String?
+  disputeAt      DateTime?
+  refundId       String?       // PayMongo refund ID once issued
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -199,6 +211,7 @@ model Booking {
   @@index([passengerId])
   @@index([driverId])
   @@index([status])
+  @@index([disputeStatus])
 }
 
 model Trip {
