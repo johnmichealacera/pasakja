@@ -21,6 +21,11 @@ enum DriverStatus {
   SUSPENDED
 }
 
+enum RemittanceStatus {
+  PENDING
+  PAID
+}
+
 enum BookingStatus {
   PENDING
   ACCEPTED
@@ -87,12 +92,29 @@ model Driver {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  bookings  Booking[]
-  ratings   Rating[]
-  earnings  Earning[]
-  documents DriverDocument[]
+  bookings     Booking[]
+  ratings      Rating[]
+  earnings     Earning[]
+  documents    DriverDocument[]
+  remittances  DriverRemittance[]
 
   @@index([status, isAvailable])
+}
+
+model DriverRemittance {
+  id         String           @id @default(cuid())
+  driverId   String
+  driver     Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  period     String           // "YYYY-MM" — one record per driver per month
+  amount     Decimal          @db.Decimal(10, 2) // platform fees owed for the period
+  status     RemittanceStatus @default(PENDING)
+  settledAt  DateTime?        // timestamp when admin marks as PAID
+  notes      String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([driverId, period])
+  @@index([driverId])
 }
 
 model DriverLocation {

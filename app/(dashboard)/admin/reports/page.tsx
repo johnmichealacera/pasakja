@@ -6,6 +6,7 @@ import { BarChart3, TrendingUp, Star, Car, Printer } from "lucide-react";
 import { startOfMonth, subMonths, format } from "date-fns";
 import Link from "next/link";
 import { PLATFORM_COMMISSION_RATE } from "@/lib/commission";
+import { RemittanceToggle } from "@/components/admin/remittance-toggle";
 
 export default async function AdminReportsPage() {
   const now = new Date();
@@ -13,6 +14,7 @@ export default async function AdminReportsPage() {
   const lastMonthStart = startOfMonth(subMonths(now, 1));
 
   const commissionPct = Math.round(PLATFORM_COMMISSION_RATE * 100);
+  const currentPeriod = format(now, "yyyy-MM"); // e.g. "2025-06"
 
   const [
     thisMonthBookings,
@@ -24,6 +26,7 @@ export default async function AdminReportsPage() {
     allTimePlatformFees,
     topDrivers,
     avgRating,
+    monthRemittances,
   ] = await Promise.all([
     prisma.booking.count({ where: { createdAt: { gte: thisMonthStart }, status: "COMPLETED" } }),
     prisma.booking.count({ where: { createdAt: { gte: lastMonthStart, lt: thisMonthStart }, status: "COMPLETED" } }),
@@ -46,6 +49,10 @@ export default async function AdminReportsPage() {
       take: 10,
     }),
     prisma.rating.aggregate({ _avg: { score: true } }),
+    // Remittance records for current month
+    prisma.driverRemittance.findMany({
+      where: { period: currentPeriod },
+    }),
   ]);
 
   const thisMonthDriverNet   = Number(thisMonthEarnings._sum.amount ?? 0);
@@ -62,6 +69,11 @@ export default async function AdminReportsPage() {
   const profitChange = lastMonthProfit > 0 ? (((thisMonthProfit - lastMonthProfit) / lastMonthProfit) * 100).toFixed(1) : null;
   const tripsChange  = lastMonthBookings > 0 ? (((thisMonthBookings - lastMonthBookings) / lastMonthBookings) * 100).toFixed(1) : null;
 
+  // Map driverId → remittance status for the current month
+  const remittanceMap = new Map(
+    monthRemittances.map((r) => [r.driverId, r])
+  );
+
   const sortedDrivers = topDrivers
     .map((d) => ({
       ...d,
@@ -71,6 +83,7 @@ export default async function AdminReportsPage() {
       avgRating:      d.ratings.length > 0
         ? (d.ratings.reduce((s, r) => s + r.score, 0) / d.ratings.length).toFixed(1)
         : null,
+      remittance:     remittanceMap.get(d.id) ?? null,
     }))
     .sort((a, b) => b._count.bookings - a._count.bookings);
 
@@ -182,15 +195,16 @@ export default async function AdminReportsPage() {
           ) : (
             <div className="space-y-2">
               {/* Header row */}
-              <div className="grid grid-cols-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 pb-1 border-b">
+              <div className="grid grid-cols-6 text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 pb-1 border-b">
                 <span className="col-span-2">Driver</span>
                 <span className="text-right">Gross Fare</span>
                 <span className="text-right">Platform ({commissionPct}%)</span>
                 <span className="text-right">Driver Net</span>
+                <span className="text-center">Remittance</span>
               </div>
 
               {sortedDrivers.map((driver, index) => (
-                <div key={driver.id} className="grid grid-cols-5 items-center p-3 rounded-lg border hover:bg-accent/20 transition-colors">
+                <div key={driver.id} className="grid grid-cols-6 items-center p-3 rounded-lg border hover:bg-accent/20 transition-colors gap-x-2">
                   <div className="col-span-2 flex items-center gap-3">
                     <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                       {index + 1}
@@ -209,7 +223,7 @@ export default async function AdminReportsPage() {
                   </div>
                   <p className="text-right text-sm font-medium">₱{driver.monthlyGross.toFixed(2)}</p>
                   <p className="text-right text-sm text-destructive">−₱{driver.monthlyFees.toFixed(2)}</p>
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-1.5">
                     <p className="text-sm font-semibold text-green-600">₱{driver.monthlyNet.toFixed(2)}</p>
                     <Link href={`/admin/reports/driver/${driver.id}`}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" title="Print earnings report">
@@ -217,11 +231,24 @@ export default async function AdminReportsPage() {
                       </Button>
                     </Link>
                   </div>
+                  {/* Remittance status for this month */}
+                  <div className="flex justify-center">
+                    {driver.monthlyFees > 0 ? (
+                      <RemittanceToggle
+                        driverId={driver.id}
+                        period={currentPeriod}
+                        amount={driver.monthlyFees}
+                        currentStatus={driver.remittance?.status ?? null}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No fees</span>
+                    )}
+                  </div>
                 </div>
               ))}
 
               {/* Totals row */}
-              <div className="grid grid-cols-5 items-center p-3 rounded-lg bg-muted/40 font-bold text-sm border-t mt-2">
+              <div className="grid grid-cols-6 items-center p-3 rounded-lg bg-muted/40 font-bold text-sm border-t mt-2">
                 <div className="col-span-2 text-muted-foreground">
                   TOTAL ({sortedDrivers.length} drivers)
                 </div>
@@ -232,6 +259,12 @@ export default async function AdminReportsPage() {
                 <p className="text-right text-green-600">
                   ₱{sortedDrivers.reduce((s, d) => s + d.monthlyNet, 0).toFixed(2)}
                 </p>
+                <div className="flex justify-center">
+                  <span className="text-xs text-muted-foreground">
+                    {sortedDrivers.filter(d => d.remittance?.status === "PAID").length}/
+                    {sortedDrivers.filter(d => d.monthlyFees > 0).length} paid
+                  </span>
+                </div>
               </div>
             </div>
           )}
