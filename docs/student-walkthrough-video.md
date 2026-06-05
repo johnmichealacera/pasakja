@@ -2,195 +2,188 @@
 
 Use this as your narration script and **shot list** when you record a screen walkthrough. Read lines in a calm, clear pace. Pause where **[PAUSE]** appears so cuts or captions fit.
 
-**Suggested length:** 10–15 minutes (or split into 3 shorter videos: *Setup*, *Passenger*, *Driver & Admin*).
+**Suggested length:** 12–18 minutes (or split into 3 shorter videos: *Setup*, *Passenger*, *Driver & Admin*).
 
-**Before recording:** Start `npm run dev`, seed the database (`npm run db:seed`), and have the demo logins from `README.md` ready.
+**Before recording:**
+1. `npm run dev`
+2. For a **clean demo**: `npm run db:cleanup` then `npm run db:seed` (restores accounts, zones, fares; clears old bookings)
+3. Have demo logins from `README.md` ready
+
+**Live demo URL:** https://pasakja.vercel.app/ (or `http://localhost:3000`)
 
 ---
 
 ## 0. Title card (0:00 – 0:20)
 
-**On screen:** Your title slide or the Pasakja landing page (`/`).
+**On screen:** Title slide or Pasakja landing page (`/`).
 
 **Say:**
 
-> “Hello. This is a short guide to **Pasakja**—our web-based **community transportation booking and dispatching system** for Socorro, Surigao del Norte.  
-> I’ll show you the **three roles** in the app: **passenger**, **driver**, and **admin**, and what you need to know to use or demo the project. **[PAUSE]** Let’s start.”
+> “Hello. This is a guide to **Pasakja**—our web-based **community transportation booking and dispatching system** for Socorro, Surigao del Norte.  
+> I’ll show the **passenger**, **driver**, and **admin** roles and how to demo the latest features: **interactive map booking**, **live driver tracking**, and **one active ride at a time** rules. **[PAUSE]** Let’s start.”
 
 ---
 
-## 1. What Pasakja does (0:20 – 1:00)
+## 1. What Pasakja does (0:20 – 1:15)
 
-**On screen:** Scroll the landing page slightly; show project name and main idea.
+**On screen:** Scroll landing page; highlight feature cards.
 
 **Say:**
 
-> “Pasakja connects **passengers** who need a ride, **drivers** who provide transport, and **administrators** who oversee bookings, fares, and safety.  
-> It’s built with **Next.js**, **PostgreSQL**, **Prisma**, and **NextAuth** for sign-in. The booking flow uses a **map** with pickup and destination, **fare estimates** from admin-configured zones, and optional **GCash** payments through **PayMongo** in **test mode** for class use—**no real money** when you use test keys. **[PAUSE]**  
-> In class, always work inside the **map area** for Socorro; the app is set up for that region.”
+> “Pasakja connects **passengers**, **drivers**, and **administrators** on one platform.  
+> It’s built with **Next.js**, **PostgreSQL**, **Prisma**, and **NextAuth**. Booking uses a **Leaflet map** with **GPS pickup**, **destination search**, and **OSRM** route distance for **fare estimates**.  
+> Payments: **cash** or **GCash** via **PayMongo test mode**—no real money with test keys. **[PAUSE]**  
+> The map is locked to **Socorro**. Vehicle types include **Tricycle**, **Habal-habal**, and **Bao-bao**.”
 
 ---
 
-## 2. If you will run the project locally (1:00 – 2:30) — optional segment
+## 2. Running locally (optional) (1:15 – 2:45)
 
-**On screen:** Terminal: clone path, `npm install`, copy `.env.example` to `.env` (blur secrets), `npm run db:generate`, `npm run db:push`, `npm run db:seed`, `npm run dev`. Do **not** show real API keys.
+**On screen:** Terminal — `npm install`, `.env` (blur secrets), `npm run db:generate`, `npm run db:push`, `npm run db:seed`, `npm run dev`. Show `npm run db:cleanup` briefly.
 
 **Say:**
 
-> “If you’re a developer on the team, you need **Node 20+** and **PostgreSQL**.  
-> After cloning, run **npm install**, copy **.env.example** to **.env**, and set **DATABASE_URL**, **NEXTAUTH_SECRET**, and **NEXTAUTH_URL**.  
-> For GCash demos, add **PayMongo test keys** from the PayMongo dashboard—still **test** keys only for coursework.  
-> Then run **database generate**, **db push** or migrate, **seed** for demo accounts, and **npm run dev**.  
-> The **README** lists **demo accounts**: admin, driver, and passenger, all with a shared demo password for exploration. **[PAUSE]**  
-> Never commit real secrets; keep them only in your local **.env**.”
+> “Developers need **Node 20+** and **PostgreSQL**. Copy **.env.example** to **.env** and set **DATABASE_URL**, **NEXTAUTH_SECRET**, and **NEXTAUTH_URL**.  
+> Add **PayMongo test keys** for GCash demos. Run **seed** for demo accounts.  
+> Before a fresh defense demo, run **db:cleanup** to clear old trips, then **seed** again. **[PAUSE]**  
+> Never commit real secrets.”
 
-*Skip this section in a “end-user only” video.*
+*Skip for end-user-only videos.*
 
 ---
 
-## 3. Sign in and roles (2:30 – 3:30)
+## 3. Sign in and roles (2:45 – 3:30)
 
-**On screen:** Login page; log in as **passenger@demo.com** (password from README—say “the demo password in the README” on audio if you don’t want to say it aloud).
+**On screen:** `/login` → `passenger@demo.com` / `demo123`.
 
 **Say:**
 
-> “Everyone signs in through the same **login** page. Your **role**—passenger, driver, or admin—controls which dashboard you see. **[PAUSE]**  
+> “Everyone uses the same **login** page. Your **role** decides the dashboard: passenger, driver, or admin. **[PAUSE]**  
 > I’ll start as a **passenger**.”
 
 ---
 
-## 4. Passenger: book a ride (3:30 – 6:00)
+## 4. Passenger: book a ride (3:30 – 7:00)
 
-**On screen:** Passenger dashboard → **Book a ride** (or equivalent). Map: use **GPS** for pickup or place pin; set **destination** by clicking the map. Show **fare estimate** and **route** on map. Mention **road snapping** if a wrong click is rejected.
+**On screen:** `/passenger` → **Book a Ride** → map workflow end-to-end.
 
 **Say:**
 
-> “As a passenger, I open **book a ride**. The **map** is centered on our service area. I can use my **location** for pickup, then **tap the map** to set where I’m going.  
-> If I click somewhere the system can’t treat as a road, it may **reject** the point and ask me to try again—that’s **road snapping** working. **[PAUSE]**  
-> I see an **estimated fare** based on distance and the **admin’s fare settings**. I can choose **shared ride** if that option is available.  
-> For payment, I can pick **cash** and pay the driver after the trip, or **GCash** for online pay in test mode—I’ll **confirm** and complete the flow my instructor expects for the demo. **[PAUSE]**  
-> After booking, I can track status and open **my trips** for history and to **rate the driver** after completion.”
+> “I open **Book a Ride**. If I already have a **pending or active** trip, the page **blocks** a second booking and sends me to **My Trips**—that’s intentional. **[PAUSE]**  
+> On the **map**, I allow **GPS** for pickup. The pin **snaps to the nearest road**—clicks off-road are rejected.  
+> I set my destination with the **place search** or by **clicking the map**. A **route line** appears and the **fare estimate** loads from **distance + zone rates**. **[PAUSE]**  
+> I can optionally pick a **nearby online driver** so the request goes to them first.  
+> I choose **Cash** or **GCash**, add notes if needed, and **Confirm Booking**. Status becomes **Pending**. **[PAUSE]**  
+> If I try to book again, the system says I already have an active ride.”
+
+**Show (if time):** GCash flow → redirect → `/passenger/payment/return`.
 
 ---
 
-## 5. Passenger: SOS (6:00 – 6:45) — short
+## 5. Passenger: live tracking & My Trips (7:00 – 8:15)
 
-**On screen:** Passenger **SOS** or emergency page (as implemented).
+**On screen:** `/passenger/trips` with an **Accepted** booking; show **LiveTrackingMap** and ETA.
 
 **Say:**
 
-> “There is an **SOS** or emergency feature for passengers. It can send **GPS coordinates** to administrators and shows **emergency contact** information.  
-> Use this only in **serious** situations in real life; in class, follow your instructor’s rules for **testing** it.”
+> “In **My Trips**, active bookings are highlighted. While the driver is **Accepted**, I see a **live map** that updates the driver’s position about every ten seconds, plus an **ETA to pickup**. **[PAUSE]**  
+> I can **cancel** only while **Pending** or **Accepted**—before pickup.  
+> After the trip completes, I **rate the driver** here.”
 
 ---
 
-## 6. Driver: go online and handle trips (6:45 – 9:00)
+## 6. Passenger: SOS (8:15 – 8:45)
 
-**On screen:** Log out; log in as **driver@demo.com**. Show **online/offline** toggle, **bookings** list or requests, **accept** a trip, **status** updates (e.g. accepted → picked up → in progress → completed), **earnings** or trip history if time.
+**On screen:** `/passenger/sos`.
 
 **Say:**
 
-> “Now as a **driver**, I sign in with the driver demo account. I can toggle **online** when I’m available. **[PAUSE]**  
-> I see **booking requests** and can **accept** one. I move the trip through the **status** steps so the passenger sees progress.  
-> The interface may show a **map** for navigation and whether payment is **cash** or **GCash**. **[PAUSE]**  
-> I can review **earnings** and **past trips** from the driver area.”
+> “**Emergency SOS** is always in the sidebar. It sends **GPS coordinates** to admins. In class, only test it when your instructor says so.”
 
 ---
 
-## 7. Admin: overview (9:00 – 11:00)
+## 7. Driver: online, accept, one trip at a time (8:45 – 11:30)
 
-**On screen:** Log in as **admin@demo.com**. Dashboard **stats**; **drivers** (verify/suspend); **bookings**; **fares** or zones; **reports**; **SOS** if you have alerts; **settings** briefly.
+**On screen:** Log out → `driver@demo.com` → online toggle → `/driver/bookings`.
 
 **Say:**
 
-> “**Administrators** see a **dashboard** with system statistics—bookings, revenue, users. **[PAUSE]**  
-> They can **verify or suspend** drivers, browse **all bookings** and **passengers**, and manage **fare zones** and rates that drive the **passenger’s fare estimate**. **[PAUSE]**  
-> **Reports** help with monthly comparisons and top drivers. **Settings** may include security and notification options.  
-> If a passenger sends an **SOS**, admins can see and act on those **alerts** here. **[PAUSE]**  
-> This panel is for **trusted** staff only in a real deployment.”
+> “As **driver**, I sign in. I must be **Verified** and **Online** to see requests. **[PAUSE]**  
+> **Bookings** splits **Requested for You** and **Available Requests**. I **Accept** one trip. If I already have an active trip, **Accept is disabled**—drivers can only handle **one ride at a time**. **[PAUSE]**  
+> I can **Decline** a passenger-requested booking to open it to everyone, or **Can’t Go** after accept to release it back to **Pending** without cancelling the passenger.  
+> I progress: **Picked Up** → **Start Trip** → **Complete**. On complete, I earn the **net amount**—**85%** of fare; **15%** is the platform fee. **[PAUSE]**  
+> **Navigate** shows the trip map; my GPS feeds the passenger’s live tracking.”
 
 ---
 
-## 8. Close (11:00 – 12:00)
+## 8. Admin: overview (11:30 – 14:00)
 
-**On screen:** Return to landing page or a simple “Thanks” slide with link to repo / README (no secrets).
+**On screen:** `admin@demo.com` → dashboard, drivers, fares, reports, SOS.
 
 **Say:**
 
-> “That’s the core of **Pasakja**: book and pay as a **passenger**, fulfill trips as a **driver**, and **manage** the system as an **admin**.  
-> For setup details, **environment variables**, and **PayMongo test** steps, use the project **README**.  
-> If you get stuck, ask in class or in your group chat. **Good luck** with the capstone.”
+> “**Admin** sees platform stats: bookings, users, **platform revenue**, SOS count. **[PAUSE]**  
+> **Driver Management**: verify, suspend, view **documents**.  
+> **Fare & Zones**: base fare + per-km rate—used by OSRM distance at booking time.  
+> **Reports**: monthly comparisons, top drivers, **remittance** status for platform fees.  
+> **SOS**: resolve passenger alerts. **[PAUSE]**  
+> Only admins see these modules.”
+
+---
+
+## 9. Close (14:00 – 15:00)
+
+**On screen:** Landing page or thanks slide + README link.
+
+**Say:**
+
+> “That’s **Pasakja**: **map booking**, **live tracking**, **realistic one-ride rules**, and **admin oversight**.  
+> For setup, **db:cleanup**, **seed**, and PayMongo test steps, see the **README**. Good luck with the capstone.”
 
 **[END]**
 
 ---
 
-## Recording checklist (for the instructor)
+## Defense demo companion
+
+For panel presentations, open **`/defense-demo.html`** in the browser (or the hosted copy) — twelve scenes matching this walkthrough with RBAC callouts.
+
+---
+
+## Recording checklist
 
 | Step | Note |
 |------|------|
 | Display | 1920×1080, browser zoom 100% |
-| Audio | USB mic or headset; record in a quiet room; normalize levels in your editor |
-| PII | Don’t read real card numbers; use test GCash + PayMongo test keys only |
-| Secrets | Blur or skip `.env` in the video |
-| Captions | Export SRT or use auto-captions and fix role names and “GCash / PayMongo” |
-| Chapters | YouTube/Canvas chapter markers: Intro · Setup (opt.) · Passenger · Driver · Admin · Outro |
+| Pre-demo | `npm run db:cleanup` + `npm run db:seed` for clean state |
+| Audio | Quiet room; normalize levels |
+| PII | PayMongo **test** keys only |
+| Secrets | Blur `.env` on screen |
+| Captions | Fix role names, GCash, OSRM, Leaflet |
 
 ---
 
-## Split into three short videos (alternative)
+## Split into three short videos
 
-1. **“Running Pasakja locally”** — Section 2 + link to README.  
-2. **“Passenger & SOS”** — Sections 3–5.  
-3. **“Driver & Admin”** — Sections 6–7 + short 8.
-
-Each target **4–5 minutes** for easier watching.
+1. **Running Pasakja locally** — Section 2  
+2. **Passenger: map book + live tracking + SOS** — Sections 3–6  
+3. **Driver & Admin** — Sections 7–8  
 
 ---
 
-*Aligned with the Pasakja capstone as documented in the repository `README.md`.*
-
----
-
-## YouTube: title, hook line, and description (copy-paste)
-
-**Live app:** [https://pasakja.vercel.app/](https://pasakja.vercel.app/)
-
-### Suggested titles (pick one)
-
-1. **Pasakja Capstone Walkthrough: Book a Ride, Driver & Admin (Socorro, Surigao del Norte)** — clear, searchable, under ~70 characters for most displays.
-2. **How to Use Pasakja — IT Capstone (Passenger, Driver, Admin Tour)** — student-friendly, “how to” intent.
-3. **Pasakja Tutorial | Community Transport Booking for Students (Full Guide)** — broad; good if the audience is not only IT majors.
-
-**Shorter A/B option:** `Pasakja App Tutorial 2026 | IT Capstone`
-
-### “Caption” = first line of the video description (YouTube shows this in search and above “Show more”)
-
-Use a single strong line before the break:
-
-> Step-by-step walkthrough of **Pasakja**—passenger booking, driver trips, and admin tools—for our capstone. Try the live app and sample logins: **https://pasakja.vercel.app/** (check the **login form** for sample credentials).
-
-### Full YouTube description (edit timestamps if your video length differs)
+## YouTube description (template)
 
 ```
-Step-by-step walkthrough of Pasakja (community transportation booking & dispatching) for our IT capstone—passenger, driver, and admin.
+Pasakja capstone walkthrough — map booking, live tracking, driver dispatch, admin tools.
 
-Try the live app here:
-https://pasakja.vercel.app/
+Live app: https://pasakja.vercel.app/
+Demo logins: see README or login page hints (passenger@demo.com / driver@demo.com / admin@demo.com — demo123)
 
-On the sign-in page, you can use the sample credentials shown in the login form to explore the system.
+Chapters: Intro · Setup · Passenger book & track · SOS · Driver · Admin · Outro
 
-0:00 Intro — What is Pasakja?
-0:xx Running locally (optional)
-0:xx Passenger — book a ride, map, fare, payments
-0:xx SOS (overview)
-0:xx Driver — online, accept trips, status
-0:xx Admin — dashboard, drivers, bookings, fares
-0:xx Closing
-
-#Pasakja #Capstone #Socorro #SurigaoDelNorte #WebDevelopment #ITProject
-
-(Replace chapter times after upload or use YouTube’s automatic chapters.)
+#Pasakja #Capstone #Socorro #Next.js #Transportation
 ```
 
-**Tags you can add in YouTube Studio:** `Pasakja`, `capstone`, `IT project`, `transportation`, `booking app`, `Next.js`, `Philippines`, `Socorro`, `student tutorial`.
+---
+
+*Aligned with Pasakja as of the latest map, booking-guard, and commission updates.*

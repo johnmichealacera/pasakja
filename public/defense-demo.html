@@ -324,13 +324,13 @@ body{
         <span>Community Transportation System</span>
       </h1>
       <p class="hero-sub">
-        A complete ride-booking day — from admin setup and driver verification to real-time passenger booking, driver dispatch, GPS navigation, and emergency SOS. Three roles, twelve scenes, every action enforced by the system.
+        A complete ride-booking day — interactive Leaflet map booking, OSRM fare estimates, preferred-driver dispatch, live GPS tracking, booking concurrency rules, platform commission, and emergency SOS. Three roles, twelve scenes, every action enforced by the system.
       </p>
       <div class="stat-row">
         <div class="stat-pill"><div class="stat-num">12</div><div class="stat-lbl">Scenes</div></div>
         <div class="stat-pill"><div class="stat-num">3</div><div class="stat-lbl">User Roles</div></div>
         <div class="stat-pill"><div class="stat-num">22</div><div class="stat-lbl">System Interfaces</div></div>
-        <div class="stat-pill"><div class="stat-num" style="color:#2563eb;">4.79</div><div class="stat-lbl">ISO 9126 Grand Mean</div></div>
+        <div class="stat-pill"><div class="stat-num" style="color:#2563eb;">4.59</div><div class="stat-lbl">ISO 9126 Grand Mean</div></div>
       </div>
       <p style="font-size:12px;color:var(--t45);margin-top:16px;">
         Bucas Grande Foundation College · Socorro, Surigao del Norte · Bachelor of Science in Information Technology
@@ -383,7 +383,8 @@ body{
 
     </div>
     <p style="font-size:12px;color:var(--t45);margin-top:20px;">
-      Run <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">npx prisma db seed</code> to restore demo accounts and sample data.
+      <strong>Before a fresh demo:</strong> run <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">npm run db:cleanup</code> to clear old bookings, then <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">npm run db:seed</code> to restore demo accounts, zones, and fares.<br>
+      Vehicle types supported: <strong>Tricycle</strong>, <strong>Habal-habal</strong>, <strong>Bao-bao</strong>.
     </p>
   </div>
 </section>
@@ -419,7 +420,7 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--public);">2</div>
-            <div class="action-text">See six feature highlights: <strong>GPS Booking, Real-Time Tracking, Auto Fare Calculation, Driver Verification, Quick Dispatching, Trip Ratings</strong></div>
+            <div class="action-text">See feature highlights: <strong>Map-Based Booking, Live Driver Tracking, OSRM Fare Estimates, Driver Verification, Preferred-Driver Dispatch, Booking Concurrency Controls, Trip Ratings</strong></div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--public);">3</div>
@@ -523,7 +524,7 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">2</div>
-            <div class="action-text">Fill: Name, Email, Phone, <strong>License No., Vehicle Type, Plate, Model</strong>, Password → Submit</div>
+            <div class="action-text">Fill: Name, Email, Phone, <strong>License No., Vehicle Type (Tricycle / Habal-habal / Bao-bao), Plate, Model</strong>, Password → Submit</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">3</div>
@@ -543,12 +544,12 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">6</div>
-            <div class="action-text">Click <strong>Verify</strong> → status changes to <strong>VERIFIED</strong> instantly</div>
+            <div class="action-text">Review uploaded <strong>driver documents</strong> (if any) → click <strong>Verify</strong> → status <strong>VERIFIED</strong></div>
           </div>
         </div>
         <div class="rbac-callout" style="--role-color:var(--admin);--role-bg:var(--admin-bg);--role-border:var(--admin-border);">
           <div class="rbac-callout-label" style="color:var(--admin);">RBAC in action</div>
-          Only the <strong>Admin</strong> can verify or suspend drivers. A PENDING driver cannot toggle their availability or appear to passengers as available. This ensures only vetted, legitimate drivers operate on the platform.
+          Only the <strong>Admin</strong> can verify or suspend drivers and view verification documents. PENDING drivers cannot go online or accept rides.
         </div>
       </div>
     </div>
@@ -574,7 +575,7 @@ body{
         <div class="role-badge" style="background:var(--passenger);">passenger</div>
         <div class="role-module">Page: <span>/passenger/book</span></div>
         <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
-          GPS captures the passenger's current location automatically. The system computes the quoted fare before the booking is confirmed.
+          Interactive Leaflet map with GPS pickup, destination picker, OSRM route distance, and fare estimate before confirm. If Maria already has a pending/active trip, Book a Ride is blocked.
         </div>
       </div>
       <div class="actions-block">
@@ -582,33 +583,34 @@ body{
           <div class="action-list-head">Actions</div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">1</div>
-            <div class="action-text">Log in as <strong>passenger@demo.com</strong> → click <strong>Book a Ride</strong> on dashboard</div>
+            <div class="action-text">Log in as <strong>passenger@demo.com</strong> → click <strong>Book a Ride</strong> (blocked with a message if an open trip already exists)</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">2</div>
-            <div class="action-text">Allow browser GPS permission → <strong>pickup coordinates captured automatically</strong> (Socorro coordinates)</div>
+            <div class="action-text">Allow browser GPS → <strong>pickup pin snaps to nearest road</strong> on the Leaflet map (Socorro bounds only)</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">3</div>
-            <div class="action-text">Enter drop-off address: <em>"Socorro Public Market"</em></div>
+            <div class="action-text">Set destination via <strong>destination search dropdown</strong> (e.g. Socorro Public Market) <em>or</em> click the map — route polyline appears</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">4</div>
-            <div class="action-text">Select payment method: <strong>Cash</strong> (or Online/GCash for PayMongo demo)</div>
+            <div class="action-text">Optional: select a <strong>nearby online driver</strong> from the map/list so the request goes to that driver first</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">5</div>
-            <div class="action-text">See <strong>quoted fare auto-calculated</strong> from zone configuration (e.g. ₱41.00 for 2 km in Zone 1)</div>
+            <div class="action-text">Choose <strong>Cash</strong> or <strong>GCash</strong> (PayMongo test) — see <strong>OSRM-based fare estimate</strong> with zone breakdown (e.g. ₱41.00)</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--passenger);">6</div>
-            <div class="action-text">Submit → booking status is <strong>PENDING</strong> — active booking card appears on passenger dashboard</div>
+            <div class="action-text">Click <strong>Confirm Booking</strong> → status <strong>PENDING</strong> — trying to book again shows <em>"You already have an active ride"</em></div>
           </div>
         </div>
         <div class="rbac-callout">
-          <div class="rbac-callout-label">Fare formula in action</div>
-          <strong>Fare = Base Fare + (Distance × Per-km Rate)</strong><br>
-          Zone 1 (Town Center): ₱25.00 base + ₱8.00/km. For a 2 km trip: ₱25 + ₱16 = <strong>₱41.00</strong>. The admin sets the rates; the system computes everything automatically.
+          <div class="rbac-callout-label">Fare + concurrency in action</div>
+          <strong>Fare = Base Fare + (OSRM Distance × Per-km Rate)</strong><br>
+          Example Zone 1: ₱25 base + ₱8/km → ~₱41 for ~2 km.<br>
+          <strong>One open booking per passenger</strong> (Pending through In Progress) — enforced in UI and API.
         </div>
       </div>
     </div>
@@ -652,24 +654,24 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">3</div>
-            <div class="action-text">Pending booking from Maria Santos appears in the <strong>Available Bookings</strong> section</div>
+            <div class="action-text">Go to <strong>/driver/bookings</strong> — booking appears under <strong>Requested for You</strong> (if passenger picked Juan) or <strong>Available Requests</strong></div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">4</div>
-            <div class="action-text">See booking card: passenger name, pickup and drop-off addresses, fare, payment method</div>
+            <div class="action-text">See card details: passenger, pickup/drop-off, fare, Cash or GCash badge, notes</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">5</div>
-            <div class="action-text">Click <strong>Accept</strong> → booking status changes to <em>ACCEPTED</em> and is now assigned exclusively to this driver</div>
+            <div class="action-text">Click <strong>Accept</strong> → status <em>ACCEPTED</em>, assigned to this driver. <strong>Accept is hidden</strong> if Juan already has another active trip</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">6</div>
-            <div class="action-text">Switch to passenger view — dashboard active booking card now shows <strong>ACCEPTED</strong> with driver name</div>
+            <div class="action-text">Passenger dashboard and <strong>My Trips</strong> show <strong>ACCEPTED</strong> with driver name; live map tracking becomes available</div>
           </div>
         </div>
         <div class="rbac-callout">
-          <div class="rbac-callout-label">RBAC in action</div>
-          Only <strong>VERIFIED</strong> drivers with availability set to Online can see and accept pending bookings. The page auto-refreshes so new requests appear without manual reload. Passengers and admins do not see this screen.
+          <div class="rbac-callout-label">Dispatch rules in action</div>
+          Only <strong>VERIFIED + Online</strong> drivers see pending bookings. <strong>One active trip per driver</strong> (Accepted → In Progress). Requested bookings can be <strong>Declined</strong> to reopen them to all drivers. Page auto-refreshes for new requests.
         </div>
       </div>
     </div>
@@ -695,7 +697,7 @@ body{
         <div class="role-badge" style="background:var(--driver);">driver</div>
         <div class="role-module">Page: <span>/driver/navigate</span><span>/driver/bookings</span></div>
         <div style="font-size:12px;color:var(--t70);margin-top:6px;line-height:1.5;">
-          The Navigation page shows the active trip details and a map with pickup and drop-off pins. The driver progresses the trip through each status.
+          Driver posts live GPS during the trip; passenger sees an animated driver marker on LiveTrackingMap in My Trips.
         </div>
       </div>
       <div class="actions-block">
@@ -707,24 +709,24 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">2</div>
-            <div class="action-text">Trip map displays <strong>pickup pin (blue)</strong> and <strong>drop-off pin (red)</strong> on the map</div>
+            <div class="action-text">TripMap shows pickup/destination pins; driver GPS updates via <strong>/api/location</strong></div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">3</div>
-            <div class="action-text">After arriving at pickup: click <strong>Picked Up</strong> in /driver/bookings → status changes to <em>PICKED_UP</em></div>
+            <div class="action-text">Passenger opens <strong>My Trips</strong> → <strong>LiveTrackingMap</strong> polls driver position every 10s; ETA shown while <em>ACCEPTED</em></div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">4</div>
-            <div class="action-text">Once moving: click <strong>Start Trip</strong> → status changes to <em>IN_PROGRESS</em></div>
+            <div class="action-text">At pickup: click <strong>Picked Up</strong> → <em>PICKED_UP</em>. If driver cannot continue: <strong>Can't Go</strong> releases booking back to <em>PENDING</em> (passenger not cancelled)</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">5</div>
-            <div class="action-text">Passenger dashboard reflects each status update in real time: <em>ACCEPTED → PICKED_UP → IN_PROGRESS</em></div>
+            <div class="action-text">Click <strong>Start Trip</strong> → <em>IN_PROGRESS</em>. Passenger and admin see each status change immediately</div>
           </div>
         </div>
         <div class="rbac-callout">
-          <div class="rbac-callout-label">Booking status lifecycle</div>
-          <strong>PENDING → ACCEPTED → PICKED_UP → IN_PROGRESS → COMPLETED</strong> is the full lifecycle. Each transition is driver-initiated through the bookings page. Both the passenger and the admin see every status change as it happens.
+          <div class="rbac-callout-label">Live tracking lifecycle</div>
+          <strong>PENDING → ACCEPTED → PICKED_UP → IN_PROGRESS → COMPLETED</strong>. Live GPS is active from Accepted through In Progress. Passenger may cancel only while Pending or Accepted (before pickup).
         </div>
       </div>
     </div>
@@ -759,7 +761,7 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">2</div>
-            <div class="action-text">An <strong>Earning record is created automatically</strong> — e.g. ₱41.00 added to driver's total</div>
+            <div class="action-text">Earning created automatically: gross ₱41.00 → driver net <strong>₱34.85 (85%)</strong>, platform fee <strong>₱6.15 (15%)</strong></div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--driver);">3</div>
@@ -819,7 +821,7 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">2</div>
-            <div class="action-text">Summary cards: <strong>Total Bookings, Completed, Pending, Cancelled, Active Drivers, Passengers, Revenue, Pending Verification, Unresolved SOS</strong></div>
+            <div class="action-text">Summary cards: bookings, users, <strong>platform revenue (15% commission)</strong>, pending verification, unresolved SOS</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">3</div>
@@ -1036,7 +1038,7 @@ body{
           <div class="action-list-head">Actions</div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">1</div>
-            <div class="action-text">Go to <strong>/admin/reports</strong> → month-over-month comparison: <strong>this month vs. last month</strong> for completed bookings and revenue</div>
+            <div class="action-text">Go to <strong>/admin/reports</strong> → month-over-month: completed bookings, <strong>platform profit (commission)</strong>, top drivers with remittance status</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">2</div>
@@ -1044,7 +1046,7 @@ body{
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">3</div>
-            <div class="action-text"><strong>Top Drivers</strong> table — Juan Dela Cruz: 1 trip, ₱41.00 this month, 5.0 ⭐ average rating</div>
+            <div class="action-text"><strong>Top Drivers</strong> — Juan: trips, net earnings, platform fees owed, <strong>remittance Pending/Paid</strong> toggle, 5.0 ⭐ rating</div>
           </div>
           <div class="action-item">
             <div class="action-num" style="background:var(--admin);">4</div>
@@ -1087,11 +1089,11 @@ body{
       </div>
       <div class="action-item">
         <div class="action-num" style="background:var(--passenger);">✓</div>
-        <div class="action-text"><strong>Passenger (Maria)</strong> — registered, booked a ride, tracked status, rated driver, sent SOS</div>
+        <div class="action-text"><strong>Passenger (Maria)</strong> — map booking, live tracking, blocked duplicate booking, rated driver, sent SOS</div>
       </div>
       <div class="action-item">
         <div class="action-num" style="background:var(--driver);">✓</div>
-        <div class="action-text"><strong>Driver (Juan)</strong> — registered, was verified, went online, accepted booking, navigated, completed trip, earned ₱41.00</div>
+        <div class="action-text"><strong>Driver (Juan)</strong> — verified, online, accepted (one trip at a time), live GPS, completed trip, net earning ₱34.85</div>
       </div>
       <div class="action-item">
         <div class="action-num" style="background:var(--admin);">✓</div>
@@ -1106,9 +1108,19 @@ body{
         <div class="summary-desc">Admin, Driver, and Passenger each see only their own modules. No accidental access, no workarounds possible.</div>
       </div>
       <div class="summary-card">
-        <div class="summary-icon">📍</div>
-        <div class="summary-title">GPS-Based Booking</div>
-        <div class="summary-desc">Pickup location captured automatically from the browser. No manual address typing for the passenger's current location.</div>
+        <div class="summary-icon">🗺️</div>
+        <div class="summary-title">Interactive Map Booking</div>
+        <div class="summary-desc">Leaflet map, OSRM route distance, road snapping, destination picker, and optional preferred-driver selection.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">📡</div>
+        <div class="summary-title">Live Driver Tracking</div>
+        <div class="summary-desc">Passengers see the driver's live position on a map during Accepted → In Progress trips.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🚦</div>
+        <div class="summary-title">Booking Concurrency</div>
+        <div class="summary-desc">One open ride per passenger; one active trip per driver — enforced in UI and API.</div>
       </div>
       <div class="summary-card">
         <div class="summary-icon">💰</div>
@@ -1134,7 +1146,7 @@ body{
 
     <p style="font-size:12px;color:var(--t45);margin-top:28px;text-align:center;">
       Pasakja: A Web-Based Community Transportation Booking &amp; Dispatching System<br>
-      Bucas Grande Foundation College · Socorro, Surigao del Norte · ISO 9126 Grand Mean 4.79 / 5.00
+      Bucas Grande Foundation College · Socorro, Surigao del Norte · ISO 9126 Grand Mean 4.59 / 5.00
     </p>
   </div>
 </section>

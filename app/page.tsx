@@ -3,61 +3,74 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  MapPin,
   Car,
   Shield,
-  Clock,
   CreditCard,
   Star,
   Users,
   ChevronRight,
   Navigation,
+  Map,
+  Route,
+  AlertTriangle,
 } from "lucide-react";
 
 const features = [
   {
-    icon: MapPin,
-    title: "GPS-Based Booking",
+    icon: Map,
+    title: "Interactive Map Booking",
     description:
-      "Book rides easily using real-time GPS location services from your browser.",
+      "Book on a Leaflet map with GPS pickup, destination search, and road snapping—scoped to Socorro.",
+  },
+  {
+    icon: Route,
+    title: "OSRM Fare Estimates",
+    description:
+      "See your quoted fare before you confirm, calculated from route distance and admin zone rates.",
   },
   {
     icon: Navigation,
-    title: "Real-Time Tracking",
+    title: "Live Driver Tracking",
     description:
-      "Track your driver's location in real time for complete transparency and safety.",
+      "Follow your driver on a live map from accept through drop-off with pickup ETA updates.",
   },
   {
-    icon: CreditCard,
-    title: "Auto Fare Calculation",
+    icon: Users,
+    title: "Preferred-Driver Dispatch",
     description:
-      "Fares are automatically calculated with support for cash and online payments.",
+      "View nearby online drivers on the map and optionally send your request to one driver first.",
   },
   {
     icon: Shield,
-    title: "Driver Verification",
+    title: "Verified Drivers",
     description:
-      "All drivers go through a rigorous verification process before they can operate.",
+      "Tricycle, Habal-habal, and Bao-bao operators are admin-verified with document review before going online.",
   },
   {
-    icon: Clock,
-    title: "Quick Dispatching",
+    icon: CreditCard,
+    title: "Cash & GCash",
     description:
-      "Our smart dispatching system connects you with the nearest available driver instantly.",
+      "Pay cash after the ride or use GCash online checkout via PayMongo (test mode for demos).",
+  },
+  {
+    icon: AlertTriangle,
+    title: "Emergency SOS",
+    description:
+      "One-tap SOS sends your GPS location to administrators anytime from the passenger dashboard.",
   },
   {
     icon: Star,
-    title: "Trip Ratings",
+    title: "Ratings & Fair Rules",
     description:
-      "Rate your driver after each trip to help maintain service quality standards.",
+      "Rate drivers after each trip. One active ride per passenger and per driver—like real-world dispatch.",
   },
 ];
 
 const stats = [
-  { value: "100+", label: "Active Drivers" },
-  { value: "500+", label: "Happy Passengers" },
-  { value: "1,000+", label: "Completed Trips" },
-  { value: "4.8★", label: "Average Rating" },
+  { value: "3", label: "Vehicle Types" },
+  { value: "24/7", label: "Web Access" },
+  { value: "Live", label: "GPS Tracking" },
+  { value: "4.6★", label: "User Evaluation" },
 ];
 
 export default function LandingPage() {
@@ -101,8 +114,9 @@ export default function LandingPage() {
                 Platform
               </h1>
               <p className="text-lg md:text-xl text-foreground/80 dark:text-foreground/75 mb-8 max-w-2xl mx-auto">
-                Pasakja connects passengers, drivers, and administrators through a
-                smart, real-time transportation system designed for our community.
+                Book rides on an interactive map, track your driver live, and pay with
+                cash or GCash—built for Socorro&apos;s tricycles, Habal-habal, and
+                Bao-bao operators.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/register">
@@ -150,7 +164,7 @@ export default function LandingPage() {
             drivers, and administrators.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature) => (
             <Card key={feature.title} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
@@ -180,18 +194,21 @@ export default function LandingPage() {
             {[
               {
                 step: "1",
-                title: "Register & Book",
-                description: "Create an account and enter your pickup and destination.",
+                title: "Map & Book",
+                description:
+                  "Register, set pickup on the map, choose a destination, and review your OSRM-based fare estimate.",
               },
               {
                 step: "2",
                 title: "Driver Accepts",
-                description: "A nearby verified driver accepts your booking request.",
+                description:
+                  "A verified online driver accepts—or you send the request to a preferred nearby driver first.",
               },
               {
                 step: "3",
-                title: "Ride & Pay",
-                description: "Track your driver, complete the trip, and pay conveniently.",
+                title: "Track & Pay",
+                description:
+                  "Watch live driver GPS on your trip, pay cash or GCash, then rate your driver when done.",
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
@@ -211,8 +228,9 @@ export default function LandingPage() {
         <div className="bg-primary rounded-2xl p-10 text-primary-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-80" />
           <h2 className="text-3xl font-bold mb-4">Ready to Ride?</h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-md mx-auto">
-            Join hundreds of passengers and drivers already using Pasakja every day.
+          <p className="text-primary-foreground/80 mb-8 max-w-lg mx-auto">
+            Replace street hail and text-based booking with a digital system built
+            for our community—passengers, drivers, and admins on one platform.
           </p>
           <Link href="/register">
             <Button size="lg" variant="secondary" className="gap-2">
