@@ -8,7 +8,7 @@ import type { LatLng } from "@/components/maps/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { addMapTiles } from "@/lib/map-tiles";
-import { SOCORRO_PLACES } from "@/lib/socorro-places";
+import { SOCORRO_PLACES, type SocorroPlace } from "@/lib/socorro-places";
 import { vehicleLabel } from "@/lib/vehicle-types";
 
 type PickMode = "pickup" | "destination";
@@ -16,6 +16,10 @@ type PickMode = "pickup" | "destination";
 export type MapPickerValue = {
   pickup: LatLng | null;
   destination: LatLng | null;
+  /** True when pickup came from device GPS (not a manual map tap). */
+  pickupFromGps?: boolean;
+  /** Set when destination is a known Socorro landmark (map dot or parent dropdown). */
+  destinationPlace?: { name: string; lat: number; lng: number } | null;
 };
 
 const SOCORRO_CENTER: LatLng = { lat: 9.6234, lng: 125.9685 };
@@ -44,7 +48,7 @@ export function MapPicker({
   heightClassName?: string;
   initialCenter?: LatLng;
   onChange?: (value: MapPickerValue) => void;
-  destinationOverride?: LatLng | null;
+  destinationOverride?: SocorroPlace | LatLng | null;
   /** Live driver positions shown on the map as amber markers. */
   driverMarkers?: DriverMarker[];
   /** Called when the passenger taps a driver marker. */
@@ -60,12 +64,20 @@ export function MapPicker({
   const gpsAppliedRef = useRef(false);
   const [pickup, setPickup] = useState<LatLng | null>(null);
   const [destination, setDestination] = useState<LatLng | null>(null);
+  const [pickupFromGps, setPickupFromGps] = useState(false);
+  const [destinationPlace, setDestinationPlace] = useState<{
+    name: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [route, setRoute] = useState<LatLng[] | null>(null);
   const [snapping, setSnapping] = useState(false);
   const [snapError, setSnapError] = useState<string | null>(null);
   const lastEmittedRef = useRef<MapPickerValue>({
     pickup: null,
     destination: null,
+    pickupFromGps: false,
+    destinationPlace: null,
   });
 
   const center = useMemo<LatLng>(() => {
@@ -84,24 +96,45 @@ export function MapPicker({
     const destinationChanged =
       prev.destination?.lat !== destination?.lat ||
       prev.destination?.lng !== destination?.lng;
+    const metaChanged =
+      prev.pickupFromGps !== pickupFromGps ||
+      prev.destinationPlace?.name !== destinationPlace?.name;
 
-    if (!pickupChanged && !destinationChanged) return;
+    if (!pickupChanged && !destinationChanged && !metaChanged) return;
 
-    const next = { pickup, destination };
+    const next: MapPickerValue = {
+      pickup,
+      destination,
+      pickupFromGps,
+      destinationPlace,
+    };
     lastEmittedRef.current = next;
     onChangeRef.current?.(next);
-  }, [destination, pickup]);
+  }, [destination, destinationPlace, pickup, pickupFromGps]);
 
   // When the parent supplies a destinationOverride (e.g. from the place picker dropdown),
   // update internal destination state and pan the map to that location.
   useEffect(() => {
     if (destinationOverride === undefined) return;
-    setDestination(destinationOverride);
-    if (destinationOverride && mapRef.current) {
-      mapRef.current.setView([destinationOverride.lat, destinationOverride.lng], 15);
+    if (destinationOverride) {
+      setDestination(destinationOverride);
+      if ("name" in destinationOverride && destinationOverride.name) {
+        setDestinationPlace({
+          name: destinationOverride.name,
+          lat: destinationOverride.lat,
+          lng: destinationOverride.lng,
+        });
+      } else {
+        setDestinationPlace(null);
+      }
+      if (mapRef.current) {
+        mapRef.current.setView([destinationOverride.lat, destinationOverride.lng], 15);
+      }
+    } else {
+      setDestination(null);
+      setDestinationPlace(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destinationOverride?.lat, destinationOverride?.lng]);
+  }, [destinationOverride]);
 
   // GPS: set pickup from current location (once), snapped to road.
   useEffect(() => {
@@ -121,6 +154,7 @@ export function MapPicker({
           } else {
             setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           }
+          setPickupFromGps(true);
           gpsAppliedRef.current = true;
           setPickMode("destination");
         },
@@ -215,6 +249,11 @@ export function MapPicker({
           dot.on("click", (e) => {
             L.DomEvent.stopPropagation(e);
             setDestination({ lat: place.lat, lng: place.lng });
+            setDestinationPlace({
+              name: place.name,
+              lat: place.lat,
+              lng: place.lng,
+            });
           });
         });
       });
@@ -277,8 +316,13 @@ export function MapPicker({
       }
 
       const snapped: LatLng = { lat: data.lat, lng: data.lng };
-      if (pickModeRef.current === "pickup") setPickup(snapped);
-      else setDestination(snapped);
+      if (pickModeRef.current === "pickup") {
+        setPickup(snapped);
+        setPickupFromGps(false);
+      } else {
+        setDestination(snapped);
+        setDestinationPlace(null);
+      }
       setSnapError(null);
     } catch {
       setSnapError("Could not verify road location. Try again.");

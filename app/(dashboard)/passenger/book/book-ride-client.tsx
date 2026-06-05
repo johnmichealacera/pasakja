@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { MapPicker, type MapPickerValue, type DriverMarker } from "@/components/maps/map-picker";
 import { type SocorroPlace } from "@/lib/socorro-places";
+import { formatSocorroPlaceAddress } from "@/lib/trip-address";
 import { DestinationSearch } from "@/components/passenger/destination-search";
 import { vehicleLabel } from "@/lib/vehicle-types";
 
@@ -55,8 +56,19 @@ export function BookRideClient() {
       const sameDestination =
         prev.destination?.lat === v.destination?.lat &&
         prev.destination?.lng === v.destination?.lng;
-      if (samePickup && sameDestination) return prev;
+      const sameMeta =
+        prev.pickupFromGps === v.pickupFromGps &&
+        prev.destinationPlace?.name === v.destinationPlace?.name;
+      if (samePickup && sameDestination && sameMeta) return prev;
       return v;
+    });
+
+    // Clear dropdown selection when the map destination no longer matches it.
+    setSelectedPlace((place) => {
+      if (!place || !v.destination) return place;
+      const latMatch = Math.abs(place.lat - v.destination.lat) < 0.0001;
+      const lngMatch = Math.abs(place.lng - v.destination.lng) < 0.0001;
+      return latMatch && lngMatch ? place : null;
     });
   }, []);
 
@@ -196,30 +208,42 @@ export function BookRideClient() {
     setIsLoading(true);
 
     try {
-      // When destination was chosen from the dropdown we already have its exact
-      // name — no need to reverse-geocode it. Only geocode if manually clicked.
+      const destPlaceName = picked.destinationPlace?.name ?? selectedPlace?.name ?? null;
+
+      const pickupParams = new URLSearchParams({
+        lat: String(picked.pickup.lat),
+        lng: String(picked.pickup.lng),
+        role: "pickup",
+      });
+      if (picked.pickupFromGps) pickupParams.set("gps", "1");
+
       const [pickupGeoRes, destinationGeoRes] = await Promise.all([
-        fetch(`/api/maps/reverse?lat=${picked.pickup.lat}&lng=${picked.pickup.lng}`),
-        selectedPlace
+        fetch(`/api/maps/reverse?${pickupParams}`),
+        destPlaceName
           ? Promise.resolve<Response | null>(null)
-          : fetch(`/api/maps/reverse?lat=${picked.destination.lat}&lng=${picked.destination.lng}`),
+          : fetch(
+              `/api/maps/reverse?lat=${picked.destination.lat}&lng=${picked.destination.lng}&role=dropoff`,
+            ),
       ]);
 
       const pickupGeoData = pickupGeoRes?.ok
         ? ((await pickupGeoRes.json()) as { address?: string | null })
         : null;
 
-      const pickupAddress = pickupGeoData?.address?.trim() || "Socorro, Surigao del Norte";
+      const pickupAddress =
+        pickupGeoData?.address?.trim() ||
+        `Pickup location, Socorro, Surigao del Norte (${picked.pickup.lat.toFixed(4)}, ${picked.pickup.lng.toFixed(4)})`;
 
       let dropoffAddress: string;
-      if (selectedPlace) {
-        // Use the human-readable place name from the dropdown
-        dropoffAddress = `${selectedPlace.name}, Socorro, Surigao del Norte`;
+      if (destPlaceName) {
+        dropoffAddress = formatSocorroPlaceAddress({ name: destPlaceName });
       } else {
         const destData = destinationGeoRes?.ok
           ? ((await destinationGeoRes.json()) as { address?: string | null })
           : null;
-        dropoffAddress = destData?.address?.trim() || "Socorro, Surigao del Norte";
+        dropoffAddress =
+          destData?.address?.trim() ||
+          `Drop-off location, Socorro, Surigao del Norte (${picked.destination.lat.toFixed(4)}, ${picked.destination.lng.toFixed(4)})`;
       }
 
       if (paymentMethod === "ONLINE") {
