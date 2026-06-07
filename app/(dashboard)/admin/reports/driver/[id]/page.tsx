@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { format, startOfMonth, subMonths } from "date-fns";
+import { formatPh, startOfMonthPh, subMonthsPh } from "@/lib/datetime";
 import { PLATFORM_COMMISSION_RATE } from "@/lib/commission";
 import { PrintButton } from "./print-button";
 
@@ -17,8 +17,8 @@ export default async function DriverReportPage({
   const { id } = await params;
 
   const now = new Date();
-  const thisMonthStart = startOfMonth(now);
-  const lastMonthStart = startOfMonth(subMonths(now, 1));
+  const thisMonthStart = startOfMonthPh(now);
+  const lastMonthStart = startOfMonthPh(subMonthsPh(now, 1));
 
   const driver = await prisma.driver.findUnique({
     where: { id },
@@ -89,7 +89,7 @@ export default async function DriverReportPage({
                 <p className="text-xl font-bold">Pasakja Transportation System</p>
                 <p className="text-muted-foreground text-sm">Driver Earnings Report</p>
                 <p className="text-xs text-muted-foreground">
-                  Generated: {format(now, "MMMM d, yyyy h:mm a")}
+                  Generated: {formatPh(now, "MMMM d, yyyy h:mm a")}
                 </p>
               </div>
               <div className="text-right text-xs text-muted-foreground">
@@ -120,8 +120,8 @@ export default async function DriverReportPage({
           {/* Period summaries */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: format(thisMonthStart, "MMMM yyyy"), data: thisMonth },
-              { label: format(lastMonthStart, "MMMM yyyy"), data: lastMonth },
+              { label: formatPh(thisMonthStart, "MMMM yyyy"), data: thisMonth },
+              { label: formatPh(lastMonthStart, "MMMM yyyy"), data: lastMonth },
               { label: "All Time", data: allTime },
             ].map(({ label, data }) => (
               <div key={label} className="border rounded-lg p-4 text-sm">
@@ -172,7 +172,7 @@ export default async function DriverReportPage({
                   return (
                     <tr key={e.id} className={i % 2 === 0 ? "" : "bg-muted/10"}>
                       <td className="px-4 py-2 text-muted-foreground">
-                        {format(new Date(e.date), "MMM d, yyyy h:mm a")}
+                        {formatPh(new Date(e.date), "MMM d, yyyy h:mm a")}
                       </td>
                       <td className="px-4 py-2 text-right">₱{gross.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right text-destructive">−₱{fee.toFixed(2)}</td>

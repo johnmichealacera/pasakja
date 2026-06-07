@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProfileImageUpload } from "@/components/profile-image-upload";
 import { Mail, Phone, Car, Star } from "lucide-react";
 import { vehicleLabel } from "@/lib/vehicle-types";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 const statusVariantMap = {
   PENDING: "secondary",
@@ -95,7 +95,7 @@ export default async function DriverProfilePage() {
               <div>
                 <p className="text-xs text-muted-foreground">Member Since</p>
                 <p className="text-sm font-medium">
-                  {format(new Date(userData.createdAt), "MMMM d, yyyy")}
+                  {formatPh(new Date(userData.createdAt), "MMMM d, yyyy")}
                 </p>
               </div>
             </div>

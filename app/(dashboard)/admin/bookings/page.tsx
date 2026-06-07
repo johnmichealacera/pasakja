@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Banknote, CreditCard } from "lucide-react";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 const statusConfig = {
   PENDING: { label: "Pending", variant: "secondary" as const },
@@ -85,7 +85,7 @@ export default async function AdminBookingsPage() {
                         )}
                       </span>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(booking.createdAt), "MMM d, h:mm a")}
+                        {formatPh(new Date(booking.createdAt), "MMM d, h:mm a")}
                       </p>
                     </div>
                   </div>

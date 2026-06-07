@@ -13,7 +13,7 @@ import {
   TrendingUp,
   AlertTriangle,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 export default async function AdminDashboard() {
   const [
@@ -260,7 +260,7 @@ export default async function AdminDashboard() {
                           </Badge>
                         </td>
                         <td className="py-2.5 text-xs text-muted-foreground hidden sm:table-cell">
-                          {format(new Date(booking.createdAt), "MMM d, h:mm a")}
+                          {formatPh(new Date(booking.createdAt), "MMM d, h:mm a")}
                         </td>
                       </tr>
                     );

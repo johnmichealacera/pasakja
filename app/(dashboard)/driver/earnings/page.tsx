@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, CheckCircle, Info } from "lucide-react";
-import { format, startOfWeek, startOfMonth } from "date-fns";
+import { formatPh, startOfMonthPh, startOfWeekPh } from "@/lib/datetime";
 import { PLATFORM_COMMISSION_RATE } from "@/lib/commission";
 
 export default async function DriverEarningsPage() {
@@ -21,8 +21,8 @@ export default async function DriverEarningsPage() {
   if (!driver) return <div>Driver not found</div>;
 
   const now = new Date();
-  const weekStart = startOfWeek(now);
-  const monthStart = startOfMonth(now);
+  const weekStart = startOfWeekPh(now);
+  const monthStart = startOfMonthPh(now);
 
   const weeklyNet = driver.earnings
     .filter((e) => new Date(e.date) >= weekStart)
@@ -133,7 +133,7 @@ export default async function DriverEarningsPage() {
                       <div>
                         <p className="text-sm font-medium">Trip Completed</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(earning.date), "MMM d, yyyy h:mm a")}
+                          {formatPh(new Date(earning.date), "MMM d, yyyy h:mm a")}
                         </p>
                       </div>
                       <p className="font-bold text-green-600 text-lg">+₱{net.toFixed(2)}</p>

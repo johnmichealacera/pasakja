@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { FileText, ExternalLink, FolderOpen } from "lucide-react";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 interface DriverDocument {
   id: string;
@@ -89,7 +89,7 @@ export function DriverDocumentsViewer({ driverName, documents }: Props) {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground hidden sm:block">
-                        {format(new Date(doc.createdAt), "MMM d, yyyy")}
+                        {formatPh(new Date(doc.createdAt), "MMM d, yyyy")}
                       </span>
                       <a
                         href={doc.url}

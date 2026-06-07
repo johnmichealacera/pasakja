@@ -3,18 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Star, Car, Printer } from "lucide-react";
-import { startOfMonth, subMonths, format } from "date-fns";
+import { formatPh, startOfMonthPh, subMonthsPh } from "@/lib/datetime";
 import Link from "next/link";
 import { PLATFORM_COMMISSION_RATE } from "@/lib/commission";
 import { RemittanceToggle } from "@/components/admin/remittance-toggle";
 
 export default async function AdminReportsPage() {
   const now = new Date();
-  const thisMonthStart = startOfMonth(now);
-  const lastMonthStart = startOfMonth(subMonths(now, 1));
+  const thisMonthStart = startOfMonthPh(now);
+  const lastMonthStart = startOfMonthPh(subMonthsPh(now, 1));
 
   const commissionPct = Math.round(PLATFORM_COMMISSION_RATE * 100);
-  const currentPeriod = format(now, "yyyy-MM"); // e.g. "2025-06"
+  const currentPeriod = formatPh(now, "yyyy-MM"); // e.g. "2025-06"
 
   const [
     thisMonthBookings,
@@ -92,7 +92,7 @@ export default async function AdminReportsPage() {
       <div>
         <h2 className="text-2xl font-bold">Reports & Analytics</h2>
         <p className="text-muted-foreground">
-          System performance for {format(now, "MMMM yyyy")} · {commissionPct}% platform commission
+          System performance for {formatPh(now, "MMMM yyyy")} · {commissionPct}% platform commission
         </p>
       </div>
 
@@ -186,7 +186,7 @@ export default async function AdminReportsPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Car className="h-4 w-4" /> Driver Earnings Breakdown — {format(now, "MMMM yyyy")}
+            <Car className="h-4 w-4" /> Driver Earnings Breakdown — {formatPh(now, "MMMM yyyy")}
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, Users } from "lucide-react";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 export default async function AdminPassengersPage() {
   const passengers = await prisma.passenger.findMany({
@@ -62,7 +62,7 @@ export default async function AdminPassengersPage() {
                         )}
                         <span>{passenger._count.bookings} trips</span>
                         <span>
-                          Since {format(new Date(passenger.user.createdAt), "MMM d, yyyy")}
+                          Since {formatPh(new Date(passenger.user.createdAt), "MMM d, yyyy")}
                         </span>
                       </div>
                     </div>

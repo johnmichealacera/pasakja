@@ -6,7 +6,7 @@ import { Mail, Phone, Car, Star } from "lucide-react";
 import { DriverVerificationActions } from "@/components/admin/driver-verification-actions";
 import { DriverDocumentsViewer } from "@/components/admin/driver-documents-viewer";
 import { vehicleLabel } from "@/lib/vehicle-types";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 
 export default async function AdminDriversPage() {
   const drivers = await prisma.driver.findMany({
@@ -105,7 +105,7 @@ export default async function AdminDriversPage() {
                         <span>{driver._count.bookings} trips</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Registered: {format(new Date(driver.createdAt), "MMM d, yyyy")}
+                        Registered: {formatPh(new Date(driver.createdAt), "MMM d, yyyy")}
                       </p>
                       {driver.ratings.length > 0 && (
                         <div className="mt-3 space-y-1.5">
@@ -128,7 +128,7 @@ export default async function AdminDriversPage() {
                                 </span>
                                 <span className="text-muted-foreground">{r.passenger.user.name}</span>
                                 <span className="text-muted-foreground">·</span>
-                                <span className="text-muted-foreground">{format(new Date(r.createdAt), "MMM d, yyyy")}</span>
+                                <span className="text-muted-foreground">{formatPh(new Date(r.createdAt), "MMM d, yyyy")}</span>
                               </div>
                               <p className="italic text-muted-foreground">&ldquo;{r.comment}&rdquo;</p>
                             </div>

@@ -4,24 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw } from "lucide-react";
+import { formatPhTime } from "@/lib/datetime";
 
 const POLL_INTERVAL_MS = 10_000;
-
-function formatTime(d: Date) {
-  return d.toLocaleTimeString("en-PH", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-}
 
 export function BookingsRefresher() {
   const router = useRouter();
   const [lastRefreshLabel, setLastRefreshLabel] = useState("");
 
   useEffect(() => {
-    const tick = () => setLastRefreshLabel(formatTime(new Date()));
+    const tick = () => setLastRefreshLabel(formatPhTime());
 
     tick();
     const interval = setInterval(() => {

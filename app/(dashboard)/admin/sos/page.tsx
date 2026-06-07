@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, MapPin, Clock, User, ShieldAlert } from "lucide-react";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 import { SosActions } from "./sos-actions";
 import { DisputeActions } from "@/components/admin/dispute-actions";
 
@@ -92,7 +92,7 @@ export default async function AdminSosPage() {
                       )}
                       {d.disputeAt && (
                         <p className="text-xs text-muted-foreground">
-                          Submitted: {format(new Date(d.disputeAt), "MMM d, yyyy h:mm a")}
+                          Submitted: {formatPh(new Date(d.disputeAt), "MMM d, yyyy h:mm a")}
                         </p>
                       )}
                       {d.refundId && (
@@ -169,7 +169,7 @@ export default async function AdminSosPage() {
                     </p>
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{format(new Date(alert.createdAt), "MMM d, yyyy h:mm:ss a")}</span>
+                      <span>{formatPh(new Date(alert.createdAt), "MMM d, yyyy h:mm:ss a")}</span>
                     </div>
                   </div>
 

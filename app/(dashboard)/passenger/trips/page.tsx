@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MapPin, Clock, CheckCircle, XCircle, Star, PlusCircle, Car } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { formatPh } from "@/lib/datetime";
 import { TripsClient } from "./trips-client";
 
 const statusConfig = {
@@ -126,7 +126,7 @@ export default async function TripsPage() {
                         </div>
                       ) : null}
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(booking.createdAt), "MMM d, h:mm a")}
+                        {formatPh(new Date(booking.createdAt), "MMM d, h:mm a")}
                       </p>
                     </div>
                   </div>
