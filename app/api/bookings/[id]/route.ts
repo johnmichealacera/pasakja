@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { driverAmount, platformFee } from "@/lib/commission";
+import { driverAmount, platformFee, passengerTotal, resolveBaseFare } from "@/lib/commission";
 import { getPaymentIdFromIntent, issueRefund } from "@/lib/paymongo";
 import {
   DRIVER_HAS_ACTIVE_BOOKING_MESSAGE,
@@ -25,6 +25,15 @@ export async function PATCH(
     try {
       const d = await prisma.driver.findUnique({ where: { id: driverId }, select: { userId: true } });
       if (d) await prisma.driverLocation.deleteMany({ where: { userId: d.userId } });
+    } catch {
+      // Non-critical — ignore cleanup errors
+    }
+  }
+
+  async function clearPassengerLocation(passengerId: string) {
+    try {
+      const p = await prisma.passenger.findUnique({ where: { id: passengerId }, select: { userId: true } });
+      if (p) await prisma.passengerLocation.deleteMany({ where: { userId: p.userId } });
     } catch {
       // Non-critical — ignore cleanup errors
     }
@@ -141,9 +150,13 @@ export async function PATCH(
         if (booking.driverId !== driver.id) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-        const grossFare = body.fare ?? (Number(booking.quotedFare) || 15);
-        const netDriver = driverAmount(grossFare);   // driver's 85%
-        const sysFee   = platformFee(grossFare);     // Pasakja's 15%
+        const baseFare =
+          body.baseFare != null
+            ? Number(body.baseFare)
+            : resolveBaseFare({ quotedFare: booking.quotedFare, fare: body.fare ?? booking.fare });
+        const driverNet = driverAmount(baseFare);
+        const sysFee = platformFee(baseFare);
+        const passengerPaid = passengerTotal(baseFare);
 
         await prisma.trip.upsert({
           where: { bookingId: id },
@@ -154,13 +167,13 @@ export async function PATCH(
           data: {
             driverId:    driver.id,
             bookingId:   id,
-            amount:      netDriver,   // what the driver receives
-            platformFee: sysFee,      // what Pasakja retains
+            amount:      driverNet,
+            platformFee: sysFee,
           },
         });
         await prisma.driver.update({
           where: { id: driver.id },
-          data: { totalEarnings: { increment: netDriver } },
+          data: { totalEarnings: { increment: driverNet } },
         });
         const paymentStatus =
           booking.paymentMethod === "CASH"
@@ -170,10 +183,11 @@ export async function PATCH(
               : "UNPAID";
         const updated = await prisma.booking.update({
           where: { id },
-          data: { status: "COMPLETED", fare: grossFare, paymentStatus },
+          data: { status: "COMPLETED", fare: passengerPaid, quotedFare: baseFare, paymentStatus },
         });
         // Clear live location — ride is done, location must not leak to future rides
         await clearDriverLocation(driver.id);
+        await clearPassengerLocation(booking.passengerId);
         return NextResponse.json({ booking: updated });
       }
 
@@ -195,6 +209,7 @@ export async function PATCH(
           data: { status: "PENDING", driverId: null },
         });
         await clearDriverLocation(driver.id);
+        await clearPassengerLocation(booking.passengerId);
         return NextResponse.json({ booking: updated });
       }
     }
@@ -217,6 +232,7 @@ export async function PATCH(
           data: { status: "CANCELLED" },
         });
         if (booking.driverId) await clearDriverLocation(booking.driverId);
+        await clearPassengerLocation(booking.passengerId);
 
         // Auto-refund: GCash booking cancelled before pickup → refund immediately
         if (

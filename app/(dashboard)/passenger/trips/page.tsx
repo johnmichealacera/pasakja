@@ -9,6 +9,10 @@ import { MapPin, Clock, CheckCircle, XCircle, Star, PlusCircle, Car } from "luci
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatPh } from "@/lib/datetime";
 import { TripsClient } from "./trips-client";
+import { TripDurationEstimate } from "@/components/trip/trip-duration-estimate";
+import { ViewCounterpartyProfile } from "@/components/trip/view-counterparty-profile";
+import { BookingFareBreakdown } from "@/components/trip/fare-breakdown";
+import { bookingFareParts } from "@/lib/commission";
 
 const statusConfig = {
   PENDING: { label: "Pending", variant: "secondary" as const, icon: Clock },
@@ -78,16 +82,9 @@ export default async function TripsPage() {
                         <config.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant={config.variant} className="text-xs">
-                            {config.label}
-                          </Badge>
-                          {isActive && (
-                            <Badge variant="outline" className="text-xs text-primary border-primary">
-                              Live
-                            </Badge>
-                          )}
-                        </div>
+                        <Badge variant={config.variant} className="text-xs">
+                          {config.label}
+                        </Badge>
                         <div className="mt-2 space-y-1">
                           <div className="flex items-start gap-1.5">
                             <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
@@ -98,8 +95,21 @@ export default async function TripsPage() {
                             <p className="text-sm truncate">{booking.dropoffAddress}</p>
                           </div>
                         </div>
+                        <div className="mt-2">
+                          <TripDurationEstimate
+                            pickupLat={booking.pickupLat}
+                            pickupLng={booking.pickupLng}
+                            dropoffLat={booking.dropoffLat}
+                            dropoffLng={booking.dropoffLng}
+                          />
+                        </div>
+                        {booking.quotedFare && (
+                          <div className="mt-2">
+                            <BookingFareBreakdown booking={booking} compact />
+                          </div>
+                        )}
                         {booking.driver && (
-                          <div className="mt-2 flex items-center gap-2">
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
                             <Avatar className="h-5 w-5">
                               {booking.driver.user.profileImage && (
                                 <AvatarImage src={booking.driver.user.profileImage} alt={booking.driver.user.name} />
@@ -111,14 +121,22 @@ export default async function TripsPage() {
                             <p className="text-xs text-muted-foreground">
                               {booking.driver.user.name} · {booking.driver.vehiclePlate}
                             </p>
+                            <ViewCounterpartyProfile
+                              bookingId={booking.id}
+                              label="View driver"
+                              size="xs"
+                            />
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      {booking.fare && (
-                        <p className="font-semibold text-sm">₱{Number(booking.fare).toFixed(2)}</p>
-                      )}
+                      {(booking.fare || booking.quotedFare) && (() => {
+                        const { passengerTotal: total } = bookingFareParts(booking);
+                        return (
+                          <p className="font-semibold text-sm">₱{total.toFixed(2)}</p>
+                        );
+                      })()}
                       {booking.rating ? (
                         <div className="flex items-center gap-1 text-yellow-500">
                           <Star className="h-3 w-3 fill-current" />

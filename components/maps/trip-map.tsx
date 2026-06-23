@@ -35,6 +35,7 @@ export function TripMap({
   const leafletModuleRef = useRef<typeof import("leaflet") | null>(null);
 
   const [driverPos, setDriverPos] = useState<LatLng | null>(null);
+  const [passengerPos, setPassengerPos] = useState<LatLng | null>(null);
   const [route, setRoute] = useState<LatLng[] | null>(null);
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>("idle");
 
@@ -88,6 +89,7 @@ export function TripMap({
       __pasakja_pickup?: Leaflet.Layer;
       __pasakja_destination?: Leaflet.Layer;
       __pasakja_driver?: Leaflet.Layer;
+      __pasakja_passenger?: Leaflet.Layer;
       __pasakja_route?: Leaflet.Layer;
     };
     const am = map as unknown as AugMap;
@@ -96,6 +98,7 @@ export function TripMap({
     if (am.__pasakja_destination) map.removeLayer(am.__pasakja_destination);
     if (am.__pasakja_route) map.removeLayer(am.__pasakja_route);
     if (am.__pasakja_driver) map.removeLayer(am.__pasakja_driver);
+    if (am.__pasakja_passenger) map.removeLayer(am.__pasakja_passenger);
 
     am.__pasakja_pickup = L.circleMarker([pickup.lat, pickup.lng], {
       color: "#14B8A6", fillColor: "#14B8A6", fillOpacity: 0.85, radius: 9, weight: 2,
@@ -199,6 +202,32 @@ export function TripMap({
     };
   }, [driverId, driverOnline, bookingId]);
 
+  // Poll passenger live location for driver navigation views
+  useEffect(() => {
+    if (!driverId || !bookingId) return;
+    let active = true;
+
+    async function poll() {
+      if (!active) return;
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/passenger-location`);
+        if (!res.ok || !active) return;
+        const data = (await res.json()) as { lat: number | null; lng: number | null };
+        if (data.lat != null && data.lng != null) {
+          setPassengerPos({ lat: data.lat, lng: data.lng });
+        } else {
+          setPassengerPos(null);
+        }
+      } catch {
+        // ignore transient errors
+      }
+    }
+
+    void poll();
+    const interval = setInterval(poll, 10_000);
+    return () => { active = false; clearInterval(interval); };
+  }, [driverId, bookingId]);
+
   // Draw / update driver self-position marker (purple) and auto-fit bounds
   useEffect(() => {
     const map = mapRef.current;
@@ -213,16 +242,43 @@ export function TripMap({
     am.__pasakja_driver = L.circleMarker([driverPos.lat, driverPos.lng], {
       color: "#A855F7", fillColor: "#A855F7", fillOpacity: 0.9, radius: 8, weight: 2,
     }).bindTooltip("You").addTo(map);
+  }, [driverPos]);
 
-    // Auto-fit bounds to include driver, pickup, and destination
-    map.fitBounds(
-      L.latLngBounds([
-        [driverPos.lat, driverPos.lng],
-        [pickup.lat, pickup.lng],
-        [destination.lat, destination.lng],
-      ]).pad(0.25)
-    );
-  }, [driverPos, pickup, destination]);
+  // Draw / update passenger live location marker (amber)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const L = leafletModuleRef.current;
+    if (!L) return;
+
+    type AugMap = { __pasakja_passenger?: Leaflet.Layer };
+    const am = map as unknown as AugMap;
+    if (am.__pasakja_passenger) map.removeLayer(am.__pasakja_passenger);
+
+    if (!passengerPos) return;
+
+    am.__pasakja_passenger = L.circleMarker([passengerPos.lat, passengerPos.lng], {
+      color: "#F59E0B", fillColor: "#F59E0B", fillOpacity: 0.9, radius: 8, weight: 2,
+    }).bindTooltip("Passenger").addTo(map);
+  }, [passengerPos]);
+
+  // Auto-fit map bounds when driver or passenger position changes
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletModuleRef.current;
+    if (!map || !L) return;
+
+    const points: [number, number][] = [
+      [pickup.lat, pickup.lng],
+      [destination.lat, destination.lng],
+    ];
+    if (driverPos) points.push([driverPos.lat, driverPos.lng]);
+    if (passengerPos) points.push([passengerPos.lat, passengerPos.lng]);
+
+    if (driverPos || passengerPos) {
+      map.fitBounds(L.latLngBounds(points).pad(0.25));
+    }
+  }, [driverPos, passengerPos, pickup, destination]);
 
   return (
     <div className="space-y-3">
@@ -248,6 +304,15 @@ export function TripMap({
               GPS unavailable on this device
             </span>
           )}
+          {passengerPos && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600" />
+              </span>
+              Passenger location live
+            </span>
+          )}
         </div>
       )}
 
@@ -263,6 +328,11 @@ export function TripMap({
         {driverPos && (
           <span className="px-3 py-1 rounded-full border bg-background/50">
             You: {formatLatLng(driverPos)}
+          </span>
+        )}
+        {passengerPos && (
+          <span className="px-3 py-1 rounded-full border bg-background/50">
+            Passenger: {formatLatLng(passengerPos)}
           </span>
         )}
       </div>

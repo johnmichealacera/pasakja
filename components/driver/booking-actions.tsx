@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, MapPin, Flag, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { resolveBaseFare } from "@/lib/commission";
 
 interface BookingActionsProps {
   booking: {
@@ -252,12 +253,11 @@ export function BookingActions({
   }
 
   if (booking.status === "IN_PROGRESS") {
-    const completeFare =
-      Number(booking.fare) || Number(booking.quotedFare) || 15;
+    const baseFare = resolveBaseFare(booking);
     return (
       <Button
         size="sm"
-        onClick={() => updateStatus("COMPLETED", { fare: completeFare })}
+        onClick={() => updateStatus("COMPLETED", { baseFare })}
         disabled={isLoading}
         className="gap-1.5 bg-green-600 hover:bg-green-700"
       >

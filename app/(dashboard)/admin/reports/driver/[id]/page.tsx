@@ -93,8 +93,8 @@ export default async function DriverReportPage({
                 </p>
               </div>
               <div className="text-right text-xs text-muted-foreground">
-                <p>Commission Rate: {commissionPct}% to Pasakja</p>
-                <p>Driver Share: {driverPct}% of gross fare</p>
+                <p>Platform fee: {commissionPct}% added to passenger total</p>
+                <p>Driver receives: full trip fare</p>
               </div>
             </div>
             <hr className="my-4" />

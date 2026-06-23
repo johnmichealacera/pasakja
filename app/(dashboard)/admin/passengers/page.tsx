@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, Users } from "lucide-react";
+import { DocumentsViewer } from "@/components/verification/documents-viewer";
+import { PASSENGER_DOC_TYPE_LABELS } from "@/lib/verification-doc-types";
 import { formatPh } from "@/lib/datetime";
 
 export default async function AdminPassengersPage() {
@@ -9,6 +11,7 @@ export default async function AdminPassengersPage() {
     include: {
       user: true,
       _count: { select: { bookings: true } },
+      documents: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { user: { createdAt: "desc" } },
   });
@@ -50,7 +53,15 @@ export default async function AdminPassengersPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold">{passenger.user.name}</p>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="font-semibold">{passenger.user.name}</p>
+                        <DocumentsViewer
+                          subjectName={passenger.user.name}
+                          documents={passenger.documents}
+                          typeLabels={PASSENGER_DOC_TYPE_LABELS}
+                          emptyMessage="This passenger has not uploaded verification documents."
+                        />
+                      </div>
                       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
                         <span className="flex items-center gap-1">
                           <Mail className="h-3 w-3" /> {passenger.user.email}

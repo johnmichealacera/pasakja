@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Car, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { DocumentUploadRegistration, type PendingDoc } from "@/components/driver/document-upload-registration";
+import {
+  PassengerDocumentUploadRegistration,
+  type PendingPassengerDoc,
+} from "@/components/passenger/passenger-document-upload-registration";
 import { VEHICLE_TYPES, VEHICLE_ICONS } from "@/lib/vehicle-types";
 
 function RegisterForm() {
@@ -22,6 +26,7 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
+  const [pendingPassengerDocs, setPendingPassengerDocs] = useState<PendingPassengerDoc[]>([]);
   const [uploadStatus, setUploadStatus] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -43,15 +48,22 @@ function RegisterForm() {
     setIsLoading(true);
 
     try {
-      // Upload driver documents first, at submit time
       let uploadedDocs: { type: string; url: string; filename: string }[] = [];
-      if (role === "DRIVER" && pendingDocs.length > 0) {
-        for (let i = 0; i < pendingDocs.length; i++) {
-          const doc = pendingDocs[i];
-          setUploadStatus(`Uploading document ${i + 1} of ${pendingDocs.length}…`);
+      const docsToUpload =
+        role === "DRIVER"
+          ? pendingDocs.map((d) => ({ ...d, uploadPath: "/api/upload/driver-docs" as const }))
+          : pendingPassengerDocs.map((d) => ({
+              ...d,
+              uploadPath: "/api/upload/passenger-docs" as const,
+            }));
+
+      if (docsToUpload.length > 0) {
+        for (let i = 0; i < docsToUpload.length; i++) {
+          const doc = docsToUpload[i];
+          setUploadStatus(`Uploading document ${i + 1} of ${docsToUpload.length}…`);
           const formData = new FormData();
           formData.append("file", doc.file);
-          const res = await fetch("/api/upload/driver-docs", { method: "POST", body: formData });
+          const res = await fetch(doc.uploadPath, { method: "POST", body: formData });
           if (res.ok) {
             const data = await res.json();
             uploadedDocs.push({ type: doc.type, url: data.url, filename: doc.file.name });
@@ -178,6 +190,13 @@ function RegisterForm() {
                     </div>
                   </div>
                 </div>
+
+                <TabsContent value="PASSENGER" className="mt-0 space-y-3 border-t pt-4">
+                  <PassengerDocumentUploadRegistration
+                    onChange={setPendingPassengerDocs}
+                    disabled={isLoading}
+                  />
+                </TabsContent>
 
                 <TabsContent value="DRIVER" className="mt-0 space-y-3 border-t pt-4">
                   <p className="text-sm font-medium text-muted-foreground">Driver Information</p>

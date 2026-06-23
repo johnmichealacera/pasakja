@@ -7,6 +7,8 @@ import { Clock, MapPin } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { passengerOpenBookingWhere } from "@/lib/booking-guards";
 import { BookRideClient } from "./book-ride-client";
+import { TripDurationEstimate } from "@/components/trip/trip-duration-estimate";
+import { BookingFareBreakdown } from "@/components/trip/fare-breakdown";
 
 const statusLabels: Record<string, string> = {
   PENDING: "Waiting for a driver",
@@ -28,7 +30,18 @@ export default async function BookRidePage() {
     const openBooking = await prisma.booking.findFirst({
       where: passengerOpenBookingWhere(passenger.id),
       orderBy: { createdAt: "desc" },
-      select: { id: true, status: true, pickupAddress: true, dropoffAddress: true },
+      select: {
+        id: true,
+        status: true,
+        pickupAddress: true,
+        dropoffAddress: true,
+        pickupLat: true,
+        pickupLng: true,
+        dropoffLat: true,
+        dropoffLng: true,
+        quotedFare: true,
+        fare: true,
+      },
     });
 
     if (openBooking) {
@@ -57,6 +70,15 @@ export default async function BookRidePage() {
                 <MapPin className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
                 <span>{openBooking.dropoffAddress}</span>
               </div>
+              <TripDurationEstimate
+                pickupLat={openBooking.pickupLat}
+                pickupLng={openBooking.pickupLng}
+                dropoffLat={openBooking.dropoffLat}
+                dropoffLng={openBooking.dropoffLng}
+              />
+              {openBooking.quotedFare != null && (
+                <BookingFareBreakdown booking={openBooking} />
+              )}
               <Link href="/passenger/trips" className="block mt-2">
                 <Button className="w-full">View my trips</Button>
               </Link>

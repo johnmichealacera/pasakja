@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { passengerTotal, platformFee } from "@/lib/commission";
 
 const MINIMUM_FARE_PHP = 15;
 
@@ -28,16 +29,21 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const baseFare = Number(fare.baseFare);
+    const zoneBaseRate = Number(fare.baseFare);
     const perKmRate = Number(fare.perKmRate);
-    const rawPHP = baseFare + distanceKm * perKmRate;
-    const estimatedFare = Math.max(Math.round(rawPHP * 100) / 100, MINIMUM_FARE_PHP);
-    const centavos = Math.round(estimatedFare * 100);
+    const rawPHP = zoneBaseRate + distanceKm * perKmRate;
+    const tripFare = Math.max(Math.round(rawPHP * 100) / 100, MINIMUM_FARE_PHP);
+    const fee = platformFee(tripFare);
+    const total = passengerTotal(tripFare);
+    const centavos = Math.round(total * 100);
 
     return NextResponse.json({
-      estimatedFare,
+      estimatedFare: tripFare,
+      baseFare: tripFare,
+      platformFee: fee,
+      passengerTotal: total,
       centavos,
-      baseFare,
+      zoneBaseFare: zoneBaseRate,
       perKmRate,
       distanceKm,
       zoneName: fare.zone.name,

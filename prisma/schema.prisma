@@ -67,8 +67,9 @@ model User {
   passenger      Passenger?
   driver         Driver?
   admin          Admin?
-  notifications  Notification[]
-  driverLocation DriverLocation?
+  notifications       Notification[]
+  driverLocation      DriverLocation?
+  passengerLocation   PassengerLocation?
 
   @@index([email])
 }
@@ -81,6 +82,7 @@ model Passenger {
   bookings   Booking[]
   ratings    Rating[]
   sosAlerts  SosAlert[]
+  documents  PassengerDocument[]
 }
 
 model Driver {
@@ -136,6 +138,18 @@ model DriverLocation {
   @@index([bookingId])
 }
 
+model PassengerLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId String?
+  latitude  Float
+  longitude Float
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
+}
+
 model DriverDocument {
   id        String   @id @default(cuid())
   driverId  String
@@ -146,6 +160,18 @@ model DriverDocument {
   createdAt DateTime @default(now())
 
   @@index([driverId])
+}
+
+model PassengerDocument {
+  id          String    @id @default(cuid())
+  passengerId String
+  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  type        String
+  url         String
+  filename    String
+  createdAt   DateTime  @default(now())
+
+  @@index([passengerId])
 }
 
 model Admin {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileImageUpload } from "@/components/profile-image-upload";
+import { PassengerDocumentsManager } from "@/components/passenger/passenger-documents-manager";
 import { Mail, Phone, Calendar, MapPin } from "lucide-react";
 import { formatPh } from "@/lib/datetime";
 
@@ -16,6 +17,7 @@ export default async function PassengerProfilePage() {
       passenger: {
         include: {
           _count: { select: { bookings: true, ratings: true } },
+          documents: { orderBy: { createdAt: "desc" } },
         },
       },
     },
@@ -79,6 +81,16 @@ export default async function PassengerProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      <PassengerDocumentsManager
+        initialDocuments={(userData.passenger?.documents ?? []).map((d) => ({
+          id: d.id,
+          type: d.type,
+          url: d.url,
+          filename: d.filename,
+          createdAt: d.createdAt.toISOString(),
+        }))}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <Card>

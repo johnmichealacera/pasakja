@@ -6,6 +6,7 @@ import {
   PASSENGER_HAS_OPEN_BOOKING_MESSAGE,
   passengerOpenBookingWhere,
 } from "@/lib/booking-guards";
+import { passengerTotal } from "@/lib/commission";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -70,6 +71,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const baseFare = estimatedFare;
+    const totalCharge = passengerTotal(baseFare);
+
     let booking;
     try {
       booking = await prisma.$transaction(async (tx) => {
@@ -94,8 +98,8 @@ export async function POST(req: NextRequest) {
             paymentStatus: "UNPAID",
             isShared: isShared ?? false,
             notes: notes ?? null,
-            fare: estimatedFare,
-            quotedFare: estimatedFare,
+            fare: totalCharge,
+            quotedFare: baseFare,
           },
         });
       });

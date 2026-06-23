@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Banknote, Smartphone, Users, CheckCircle, Loader2, MapPin, Star, Navigation } from "lucide-react";
+import { Banknote, Smartphone, Users, CheckCircle, Loader2, MapPin, Star, Navigation, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { MapPicker, type MapPickerValue, type DriverMarker } from "@/components/maps/map-picker";
+import { TripDurationEstimate } from "@/components/trip/trip-duration-estimate";
+import { FareBreakdown } from "@/components/trip/fare-breakdown";
 import { type SocorroPlace } from "@/lib/socorro-places";
 import { formatSocorroPlaceAddress } from "@/lib/trip-address";
 import { DestinationSearch } from "@/components/passenger/destination-search";
@@ -19,11 +21,14 @@ import { vehicleLabel } from "@/lib/vehicle-types";
 type PaymentMethod = "CASH" | "ONLINE";
 
 interface FareEstimate {
-  estimatedFare: number;
+  tripFare: number;
+  platformFee: number;
+  passengerTotal: number;
   centavos: number;
   distanceKm: number;
+  durationMinutes: number;
   zoneName?: string;
-  baseFare?: number;
+  zoneBaseFare?: number;
   perKmRate?: number;
 }
 
@@ -42,7 +47,8 @@ export function BookRideClient() {
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const estimateAbort = useRef<AbortController | null>(null);
 
-  // Selected destination from the quick-pick dropdown
+  // Selected places from the quick-pick dropdowns
+  const [selectedPickupPlace, setSelectedPickupPlace] = useState<SocorroPlace | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<SocorroPlace | null>(null);
 
   // Nearby available drivers
@@ -58,9 +64,17 @@ export function BookRideClient() {
         prev.destination?.lng === v.destination?.lng;
       const sameMeta =
         prev.pickupFromGps === v.pickupFromGps &&
+        prev.pickupPlace?.name === v.pickupPlace?.name &&
         prev.destinationPlace?.name === v.destinationPlace?.name;
       if (samePickup && sameDestination && sameMeta) return prev;
       return v;
+    });
+
+    setSelectedPickupPlace((place) => {
+      if (!place || !v.pickup) return place;
+      const latMatch = Math.abs(place.lat - v.pickup.lat) < 0.0001;
+      const lngMatch = Math.abs(place.lng - v.pickup.lng) < 0.0001;
+      return latMatch && lngMatch ? place : null;
     });
 
     // Clear dropdown selection when the map destination no longer matches it.
@@ -92,6 +106,7 @@ export function BookRideClient() {
       .then(async (routeRes) => {
         const routeData = (await routeRes.json()) as {
           distanceKm?: number;
+          durationMinutes?: number;
           error?: string;
         };
         if (ctrl.signal.aborted) return;
@@ -116,7 +131,13 @@ export function BookRideClient() {
         });
         const est = (await fareRes.json()) as {
           estimatedFare?: number;
+          baseFare?: number;
+          platformFee?: number;
+          passengerTotal?: number;
           centavos?: number;
+          zoneBaseFare?: number;
+          perKmRate?: number;
+          zoneName?: string;
           error?: string;
         };
         if (ctrl.signal.aborted) return;
@@ -127,14 +148,18 @@ export function BookRideClient() {
           return;
         }
 
+        const tripFare = est.baseFare ?? est.estimatedFare ?? 0;
         setEstimateError(null);
         setFareEstimate({
-          estimatedFare: est.estimatedFare ?? 0,
+          tripFare,
+          platformFee: est.platformFee ?? 0,
+          passengerTotal: est.passengerTotal ?? tripFare,
           centavos: est.centavos ?? 0,
           distanceKm: km,
-          zoneName: (est as { zoneName?: string }).zoneName,
-          baseFare: (est as { baseFare?: number }).baseFare,
-          perKmRate: (est as { perKmRate?: number }).perKmRate,
+          durationMinutes: routeData.durationMinutes ?? 1,
+          zoneName: est.zoneName,
+          zoneBaseFare: est.zoneBaseFare,
+          perKmRate: est.perKmRate,
         });
       })
       .catch((err: unknown) => {
@@ -209,6 +234,7 @@ export function BookRideClient() {
 
     try {
       const destPlaceName = picked.destinationPlace?.name ?? selectedPlace?.name ?? null;
+      const pickupPlaceName = picked.pickupPlace?.name ?? selectedPickupPlace?.name ?? null;
 
       const pickupParams = new URLSearchParams({
         lat: String(picked.pickup.lat),
@@ -218,7 +244,9 @@ export function BookRideClient() {
       if (picked.pickupFromGps) pickupParams.set("gps", "1");
 
       const [pickupGeoRes, destinationGeoRes] = await Promise.all([
-        fetch(`/api/maps/reverse?${pickupParams}`),
+        pickupPlaceName
+          ? Promise.resolve<Response | null>(null)
+          : fetch(`/api/maps/reverse?${pickupParams}`),
         destPlaceName
           ? Promise.resolve<Response | null>(null)
           : fetch(
@@ -226,13 +254,18 @@ export function BookRideClient() {
             ),
       ]);
 
-      const pickupGeoData = pickupGeoRes?.ok
-        ? ((await pickupGeoRes.json()) as { address?: string | null })
-        : null;
+      let pickupAddress: string;
+      if (pickupPlaceName) {
+        pickupAddress = formatSocorroPlaceAddress({ name: pickupPlaceName });
+      } else {
+        const pickupGeoData = pickupGeoRes?.ok
+          ? ((await pickupGeoRes.json()) as { address?: string | null })
+          : null;
 
-      const pickupAddress =
-        pickupGeoData?.address?.trim() ||
-        `Pickup location, Socorro, Surigao del Norte (${picked.pickup.lat.toFixed(4)}, ${picked.pickup.lng.toFixed(4)})`;
+        pickupAddress =
+          pickupGeoData?.address?.trim() ||
+          `Pickup location, Socorro, Surigao del Norte (${picked.pickup.lat.toFixed(4)}, ${picked.pickup.lng.toFixed(4)})`;
+      }
 
       let dropoffAddress: string;
       if (destPlaceName) {
@@ -272,7 +305,7 @@ export function BookRideClient() {
         dropoffLat: picked.destination!.lat,
         dropoffLng: picked.destination!.lng,
         dropoffAddress,
-        quotedFare: fareEstimate?.estimatedFare ?? null,
+        quotedFare: fareEstimate?.tripFare ?? null,
         requestedDriverId: selectedDriver?.driverId ?? null,
       }),
     });
@@ -308,7 +341,7 @@ export function BookRideClient() {
         dropoffAddress,
         isShared,
         notes: form.notes,
-        estimatedFare: fareEstimate.estimatedFare,
+        estimatedFare: fareEstimate.tripFare,
         centavos: fareEstimate.centavos,
         requestedDriverId: selectedDriver?.driverId ?? null,
       }),
@@ -365,6 +398,23 @@ export function BookRideClient() {
               <CardDescription>Where are you going?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* ── Pickup searchable picker ── */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-teal-600" />
+                  Select Pickup
+                </label>
+                <DestinationSearch
+                  variant="pickup"
+                  value={selectedPickupPlace}
+                  onSelect={setSelectedPickupPlace}
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Or use your GPS / click the map below to set a custom pickup.
+                </p>
+              </div>
+
               {/* ── Destination searchable picker ── */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
@@ -384,6 +434,7 @@ export function BookRideClient() {
               <MapPicker
                 onChange={handleMapChange}
                 heightClassName="h-[320px] lg:h-[440px]"
+                pickupOverride={selectedPickupPlace}
                 destinationOverride={selectedPlace}
                 driverMarkers={nearbyDrivers}
                 onDriverSelect={(d) => {
@@ -392,6 +443,17 @@ export function BookRideClient() {
                   );
                 }}
               />
+
+              {picked.pickup && picked.destination && (
+                <TripDurationEstimate
+                  pickupLat={picked.pickup.lat}
+                  pickupLng={picked.pickup.lng}
+                  dropoffLat={picked.destination.lat}
+                  dropoffLng={picked.destination.lng}
+                  durationMinutes={fareEstimate?.durationMinutes}
+                  distanceKm={fareEstimate?.distanceKm}
+                />
+              )}
 
               {/* Nearby drivers list */}
               {nearbyDrivers.length > 0 && (
@@ -550,12 +612,12 @@ export function BookRideClient() {
             <Card className="bg-muted/30">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Estimated Fare</span>
+                  <span className="text-muted-foreground">Estimated Total</span>
                   {estimateLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : fareEstimate ? (
                     <span className="font-semibold">
-                      ₱{fareEstimate.estimatedFare.toFixed(2)}
+                      ₱{fareEstimate.passengerTotal.toFixed(2)}
                     </span>
                   ) : estimateError ? (
                     <span className="text-muted-foreground text-xs">—</span>
@@ -569,9 +631,17 @@ export function BookRideClient() {
                   </p>
                 )}
                 {fareEstimate && !estimateError && (
-                  <div className="mt-1 space-y-0.5">
+                  <div className="mt-3 space-y-2">
+                    <FareBreakdown baseFare={fareEstimate.tripFare} />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        Estimated Trip Time
+                      </span>
+                      <span className="font-medium">~{fareEstimate.durationMinutes} min</span>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      ~{fareEstimate.distanceKm.toFixed(1)} km &middot;{" "}
+                      ~{fareEstimate.distanceKm.toFixed(1)} km from pickup to destination &middot;{" "}
                       {paymentMethod === "ONLINE"
                         ? "Charged via GCash before ride"
                         : "Pay cash to driver after ride"}
@@ -579,8 +649,8 @@ export function BookRideClient() {
                     {fareEstimate.zoneName && (
                       <p className="text-xs text-muted-foreground">
                         Rate: <span className="font-medium text-foreground">{fareEstimate.zoneName}</span>
-                        {fareEstimate.baseFare !== undefined && fareEstimate.perKmRate !== undefined && (
-                          <> &middot; ₱{fareEstimate.baseFare} base + ₱{fareEstimate.perKmRate}/km</>
+                        {fareEstimate.zoneBaseFare !== undefined && fareEstimate.perKmRate !== undefined && (
+                          <> &middot; ₱{fareEstimate.zoneBaseFare} base + ₱{fareEstimate.perKmRate}/km</>
                         )}
                       </p>
                     )}

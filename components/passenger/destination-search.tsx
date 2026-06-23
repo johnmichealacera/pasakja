@@ -8,9 +8,21 @@ interface Props {
   value: SocorroPlace | null;
   onSelect: (place: SocorroPlace | null) => void;
   disabled?: boolean;
+  variant?: "pickup" | "destination";
 }
 
-export function DestinationSearch({ value, onSelect, disabled }: Props) {
+const VARIANT_COPY = {
+  pickup: {
+    placeholder: "Search pickup areas in Socorro…",
+    empty: "Search pickup areas in Socorro…",
+  },
+  destination: {
+    placeholder: "Search destinations in Socorro…",
+    empty: "Search destinations in Socorro…",
+  },
+} as const;
+
+export function DestinationSearch({ value, onSelect, disabled, variant = "destination" }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,6 +91,8 @@ export function DestinationSearch({ value, onSelect, disabled }: Props) {
     );
   }
 
+  const copy = VARIANT_COPY[variant];
+
   return (
     <div ref={containerRef} className="relative">
       {/* Input trigger */}
@@ -88,7 +102,7 @@ export function DestinationSearch({ value, onSelect, disabled }: Props) {
           ref={inputRef}
           type="text"
           disabled={disabled}
-          placeholder={value ? value.name : "Search destinations in Socorro…"}
+          placeholder={value ? value.name : copy.placeholder}
           value={query}
           onChange={handleInputChange}
           onFocus={handleFocus}

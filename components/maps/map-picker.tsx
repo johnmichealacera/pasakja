@@ -18,6 +18,8 @@ export type MapPickerValue = {
   destination: LatLng | null;
   /** True when pickup came from device GPS (not a manual map tap). */
   pickupFromGps?: boolean;
+  /** Set when pickup is a known Socorro landmark (map dot or parent dropdown). */
+  pickupPlace?: { name: string; lat: number; lng: number } | null;
   /** Set when destination is a known Socorro landmark (map dot or parent dropdown). */
   destinationPlace?: { name: string; lat: number; lng: number } | null;
 };
@@ -41,6 +43,7 @@ export function MapPicker({
   heightClassName = "h-[420px]",
   initialCenter,
   onChange,
+  pickupOverride,
   destinationOverride,
   driverMarkers = [],
   onDriverSelect,
@@ -48,6 +51,7 @@ export function MapPicker({
   heightClassName?: string;
   initialCenter?: LatLng;
   onChange?: (value: MapPickerValue) => void;
+  pickupOverride?: SocorroPlace | LatLng | null;
   destinationOverride?: SocorroPlace | LatLng | null;
   /** Live driver positions shown on the map as amber markers. */
   driverMarkers?: DriverMarker[];
@@ -65,6 +69,11 @@ export function MapPicker({
   const [pickup, setPickup] = useState<LatLng | null>(null);
   const [destination, setDestination] = useState<LatLng | null>(null);
   const [pickupFromGps, setPickupFromGps] = useState(false);
+  const [pickupPlace, setPickupPlace] = useState<{
+    name: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [destinationPlace, setDestinationPlace] = useState<{
     name: string;
     lat: number;
@@ -77,6 +86,7 @@ export function MapPicker({
     pickup: null,
     destination: null,
     pickupFromGps: false,
+    pickupPlace: null,
     destinationPlace: null,
   });
 
@@ -98,6 +108,7 @@ export function MapPicker({
       prev.destination?.lng !== destination?.lng;
     const metaChanged =
       prev.pickupFromGps !== pickupFromGps ||
+      prev.pickupPlace?.name !== pickupPlace?.name ||
       prev.destinationPlace?.name !== destinationPlace?.name;
 
     if (!pickupChanged && !destinationChanged && !metaChanged) return;
@@ -106,11 +117,38 @@ export function MapPicker({
       pickup,
       destination,
       pickupFromGps,
+      pickupPlace,
       destinationPlace,
     };
     lastEmittedRef.current = next;
     onChangeRef.current?.(next);
-  }, [destination, destinationPlace, pickup, pickupFromGps]);
+  }, [destination, destinationPlace, pickup, pickupFromGps, pickupPlace]);
+
+  // When the parent supplies a pickupOverride (e.g. from the place picker dropdown),
+  // update internal pickup state and pan the map to that location.
+  useEffect(() => {
+    if (pickupOverride === undefined) return;
+    if (pickupOverride) {
+      setPickup(pickupOverride);
+      setPickupFromGps(false);
+      if ("name" in pickupOverride && pickupOverride.name) {
+        setPickupPlace({
+          name: pickupOverride.name,
+          lat: pickupOverride.lat,
+          lng: pickupOverride.lng,
+        });
+      } else {
+        setPickupPlace(null);
+      }
+      if (mapRef.current) {
+        mapRef.current.setView([pickupOverride.lat, pickupOverride.lng], 15);
+      }
+    } else {
+      setPickup(null);
+      setPickupPlace(null);
+      setPickupFromGps(false);
+    }
+  }, [pickupOverride]);
 
   // When the parent supplies a destinationOverride (e.g. from the place picker dropdown),
   // update internal destination state and pan the map to that location.
@@ -155,6 +193,7 @@ export function MapPicker({
             setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           }
           setPickupFromGps(true);
+          setPickupPlace(null);
           gpsAppliedRef.current = true;
           setPickMode("destination");
         },
@@ -244,16 +283,23 @@ export function MapPicker({
             )
             .addTo(map);
 
-          // Clicking a place dot sets it as destination directly (coords are
-          // already road-accurate; snapping is skipped intentionally).
+          // Clicking a place dot sets pickup or destination based on active pick mode.
           dot.on("click", (e) => {
             L.DomEvent.stopPropagation(e);
-            setDestination({ lat: place.lat, lng: place.lng });
-            setDestinationPlace({
+            const coords = { lat: place.lat, lng: place.lng };
+            const placeMeta = {
               name: place.name,
               lat: place.lat,
               lng: place.lng,
-            });
+            };
+            if (pickModeRef.current === "pickup") {
+              setPickup(coords);
+              setPickupFromGps(false);
+              setPickupPlace(placeMeta);
+            } else {
+              setDestination(coords);
+              setDestinationPlace(placeMeta);
+            }
           });
         });
       });
@@ -319,6 +365,7 @@ export function MapPicker({
       if (pickModeRef.current === "pickup") {
         setPickup(snapped);
         setPickupFromGps(false);
+        setPickupPlace(null);
       } else {
         setDestination(snapped);
         setDestinationPlace(null);

@@ -55,13 +55,14 @@ export async function GET(req: NextRequest) {
     const route = data.routes?.[0];
     const coords = route?.geometry?.coordinates;
     if (!coords?.length) {
-      return NextResponse.json({ polyline: [] as LatLng[], distanceKm: 0 });
+      return NextResponse.json({ polyline: [] as LatLng[], distanceKm: 0, durationMinutes: 0 });
     }
 
     const polyline: LatLng[] = coords.map(([lon, lat]) => ({ lat, lng: lon }));
     const distanceKm = Math.round(((route?.distance ?? 0) / 1000) * 100) / 100;
+    const durationMinutes = Math.max(1, Math.ceil((route?.duration ?? 0) / 60));
 
-    return NextResponse.json({ polyline, distanceKm });
+    return NextResponse.json({ polyline, distanceKm, durationMinutes });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch route" },

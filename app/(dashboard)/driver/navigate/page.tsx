@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation, Phone } from "lucide-react";
 import { TripMap } from "@/components/maps/trip-map";
 import { PickupEtaChip } from "@/components/driver/pickup-eta-chip";
+import { TripDurationEstimate } from "@/components/trip/trip-duration-estimate";
+import { ViewCounterpartyProfile } from "@/components/trip/view-counterparty-profile";
 
 export default async function DriverNavigatePage() {
   const session = await auth();
@@ -62,20 +64,33 @@ export default async function DriverNavigatePage() {
                     pickupLng={activeBooking.pickupLng}
                     status={activeBooking.status}
                   />
+                  <TripDurationEstimate
+                    pickupLat={activeBooking.pickupLat}
+                    pickupLng={activeBooking.pickupLng}
+                    dropoffLat={activeBooking.dropoffLat}
+                    dropoffLng={activeBooking.dropoffLng}
+                  />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Phone className="h-5 w-5 text-primary" />
+              <div className="flex items-center justify-between gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Phone className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium">{activeBooking.passenger.user.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {activeBooking.passenger.user.phone ?? "No phone number"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{activeBooking.passenger.user.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {activeBooking.passenger.user.phone ?? "No phone number"}
-                  </p>
-                </div>
+                <ViewCounterpartyProfile
+                  bookingId={activeBooking.id}
+                  label="View passenger"
+                  size="sm"
+                />
               </div>
 
               <div className="space-y-3">

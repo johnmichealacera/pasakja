@@ -11,6 +11,9 @@ import { BookingsRefresher } from "@/components/driver/bookings-refresher";
 import Link from "next/link";
 import { TripMap } from "@/components/maps/trip-map";
 import { PickupEtaChip } from "@/components/driver/pickup-eta-chip";
+import { TripDurationEstimate } from "@/components/trip/trip-duration-estimate";
+import { BookingFareBreakdown } from "@/components/trip/fare-breakdown";
+import { ViewCounterpartyProfile } from "@/components/trip/view-counterparty-profile";
 
 function bookingActionsPayload(booking: {
   id: string;
@@ -40,6 +43,10 @@ function PendingBookingCard({
     quotedFare: { toString(): string } | number | string | null;
     pickupAddress: string;
     dropoffAddress: string;
+    pickupLat: number;
+    pickupLng: number;
+    dropoffLat: number;
+    dropoffLng: number;
     isShared: boolean;
     paymentMethod: string;
     notes: string | null;
@@ -67,6 +74,11 @@ function PendingBookingCard({
                 </AvatarFallback>
               </Avatar>
               <p className="font-medium text-sm">{booking.passenger.user.name}</p>
+              <ViewCounterpartyProfile
+                bookingId={booking.id}
+                label="View passenger"
+                size="xs"
+              />
             </div>
             <div className="space-y-1">
               <div className="flex items-start gap-1.5">
@@ -78,6 +90,19 @@ function PendingBookingCard({
                 <p className="text-sm">{booking.dropoffAddress}</p>
               </div>
             </div>
+            <div className="mt-2">
+              <TripDurationEstimate
+                pickupLat={booking.pickupLat}
+                pickupLng={booking.pickupLng}
+                dropoffLat={booking.dropoffLat}
+                dropoffLng={booking.dropoffLng}
+              />
+            </div>
+            {booking.quotedFare != null && (
+              <div className="mt-2">
+                <BookingFareBreakdown booking={booking} showDriverNote />
+              </div>
+            )}
             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
               {booking.isShared && (
                 <span className="flex items-center gap-1">
@@ -200,6 +225,12 @@ export default async function DriverBookingsPage() {
                           pickupLng={booking.pickupLng}
                           status={booking.status}
                         />
+                        <TripDurationEstimate
+                          pickupLat={booking.pickupLat}
+                          pickupLng={booking.pickupLng}
+                          dropoffLat={booking.dropoffLat}
+                          dropoffLng={booking.dropoffLng}
+                        />
                         <Avatar className="h-6 w-6">
                           {booking.passenger.user.profileImage && (
                             <AvatarImage src={booking.passenger.user.profileImage} alt={booking.passenger.user.name} />
@@ -211,6 +242,11 @@ export default async function DriverBookingsPage() {
                         <span className="text-sm font-medium">
                           {booking.passenger.user.name}
                         </span>
+                        <ViewCounterpartyProfile
+                          bookingId={booking.id}
+                          label="View passenger"
+                          size="xs"
+                        />
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-start gap-1.5">
@@ -222,6 +258,11 @@ export default async function DriverBookingsPage() {
                           <p className="text-sm">{booking.dropoffAddress}</p>
                         </div>
                       </div>
+                      {booking.quotedFare != null && (
+                        <div className="mt-2">
+                          <BookingFareBreakdown booking={booking} showDriverNote />
+                        </div>
+                      )}
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                         {booking.isShared && (
                           <span className="flex items-center gap-1">

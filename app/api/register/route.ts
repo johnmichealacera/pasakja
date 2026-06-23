@@ -38,9 +38,26 @@ export async function POST(req: NextRequest) {
     });
 
     if (userRole === "PASSENGER") {
-      await prisma.passenger.create({
+      const passenger = await prisma.passenger.create({
         data: { userId: user.id },
       });
+
+      if (Array.isArray(documents) && documents.length > 0) {
+        const validDocs = documents.filter(
+          (d: { type?: string; url?: string; filename?: string }) =>
+            d.type && d.url && d.filename
+        );
+        if (validDocs.length > 0) {
+          await prisma.passengerDocument.createMany({
+            data: validDocs.map((d: { type: string; url: string; filename: string }) => ({
+              passengerId: passenger.id,
+              type: d.type,
+              url: d.url,
+              filename: d.filename,
+            })),
+          });
+        }
+      }
     } else if (userRole === "DRIVER") {
       if (!licenseNo || !vehicleType || !vehiclePlate || !vehicleModel) {
         await prisma.user.delete({ where: { id: user.id } });

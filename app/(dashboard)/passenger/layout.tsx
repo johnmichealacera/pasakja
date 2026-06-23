@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { prisma } from "@/lib/prisma";
+import { PassengerLocationSharer } from "@/components/passenger/passenger-location-sharer";
+import { DRIVER_ACTIVE_BOOKING_STATUSES } from "@/lib/booking-guards";
 
 export default async function PassengerLayout({
   children,
@@ -17,13 +19,23 @@ export default async function PassengerLayout({
   }
 
   const user = session.user as { id: string };
-  const userData = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { profileImage: true },
-  });
+  const [userData, activeBooking] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { profileImage: true },
+    }),
+    prisma.booking.findFirst({
+      where: {
+        passenger: { userId: user.id },
+        status: { in: DRIVER_ACTIVE_BOOKING_STATUSES },
+      },
+      select: { id: true },
+    }),
+  ]);
 
   return (
     <DashboardLayout role="passenger" profileImage={userData?.profileImage ?? null}>
+      {activeBooking && <PassengerLocationSharer bookingId={activeBooking.id} />}
       {children}
     </DashboardLayout>
   );
