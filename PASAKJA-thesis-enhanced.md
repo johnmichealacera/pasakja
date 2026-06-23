@@ -87,17 +87,7 @@ The general objectives of this study are to enhance the efficiency and accessibi
 
 #### Specific Objectives
 
-The study is generally aimed at developing a web-based community transportation booking and dispatching system that seeks to:
-
-1. Design and implement a web-based platform that allows passengers to easily register and book rides online;
-2. Develop an automated fare calculation system with support for cash and online payment methods;
-3. Integrate real-time GPS tracking to allow passengers to monitor driver location during trips;
-4. Create a driver module that enables verified drivers to receive nearby booking requests, set availability, navigate routes, and view earnings;
-5. Develop an administrative dashboard for managing drivers, fare rates, service zones, reports, and system notifications;
-6. Incorporate optional safety and efficiency features such as shared rides and an SOS emergency button;
-7. Generate trip history, ratings, and system reports that automatically update for monitoring and decision-making;
-8. Ensure data security, access control, and proper user authentication for passengers, drivers, and administrators; and
-9. Develop a system that conforms to the standards of ISO 9126 in terms of functionality, usability, reliability, efficiency, maintainability, portability, and accessibility.
+The study is generally aimed at developing a web-based community transportation booking and dispatching system that seeks to design and implement a web-based platform that allows passengers to easily register and book rides online; develop an automated fare calculation system with support for cash and online payment methods; integrate real-time GPS tracking to allow passengers to monitor driver location during trips; create a driver module that enables verified drivers to receive nearby booking requests, set availability, navigate routes, and view earnings; develop an administrative dashboard for managing drivers, fare rates, service zones, reports, and system notifications; incorporate optional safety and efficiency features such as shared rides and an SOS emergency button; generate trip history, ratings, and system reports that automatically update for monitoring and decision-making; ensure data security, access control, and proper user authentication for passengers, drivers, and administrators; and develop a system that conforms to established standards such as ISO 9126 in terms of functionality, usability, reliability, efficiency, maintainability, portability, and accessibility.
 
 ### Scope and Limitations of the Study
 
@@ -105,24 +95,11 @@ This section defines what Pasakja: A Web-based Community Transportation Booking 
 
 #### Scope of the Study
 
-- **Online Ride Booking:** The system allows passengers to register and book transportation services through a web-based platform.
-- **Fare Calculation and Payment:** The system automatically computes fares and supports both cash and online payment methods.
-- **Real-Time Tracking:** GPS technology is used to enable passengers to track drivers in real time during trips.
-- **Driver Management:** The system supports driver registration and verification, booking notifications, availability settings, GPS navigation, and earnings monitoring.
-- **Administrative Management:** The system provides an admin dashboard for managing drivers, fare rates, service zones, reports, and notifications.
-- **Trip Records and Ratings:** The system stores trip history and allows passengers to rate drivers after each trip.
-- **Optional Features:** The study includes optional features such as shared rides and an SOS emergency button to enhance safety and service efficiency.
+The scope of this study includes the development and evaluation of a web-based platform that allows passengers to register and book transportation services online. The system automatically computes fares and supports both cash and online payment methods, with fares displayed as a transparent breakdown of trip fare, platform fee, and total amount payable by the passenger. GPS technology enables passengers to track drivers in real time during trips, while the system also provides estimated trip duration and distance between selected pickup and destination points. For drivers, the system supports registration and verification, booking notifications, availability settings, GPS navigation, and earnings monitoring. Passengers may optionally upload identity and supporting documents for administrative review, similar to the driver verification workflow. An administrative dashboard is provided for managing drivers, fare rates, service zones, reports, and notifications. The system stores trip history and allows passengers to rate drivers after each trip. Optional features such as shared rides and an SOS emergency button are included to enhance safety and service efficiency.
 
 #### Limitations of the Study
 
-- The study is limited to a specific community in Socorro, Surigao del Norte, and the system is tested only among selected passengers, drivers, and administrators.
-- The system is web-based and requires a stable internet connection and GPS-enabled devices to function properly.
-- The study does not include the development of a native mobile application.
-- Budget, time, and technological resources may limit the scope and features of the system.
-- Online payment functionality depends on the availability and reliability of third-party payment service providers.
-- GCash / online payments: The system demonstrates GCash checkout using a PayMongo test account only; production use was not implemented or evaluated.
-- Legal / merchant requirements: Real GCash payouts and live transactions require an approved business (or duly registered sole proprietor) merchant account with the payment provider; this study does not claim compliance with or completion of those legal and commercial requirements.
-- Data privacy and security concerns may limit access to real operational data during system testing and evaluation.
+The study is limited to a specific community in Socorro, Surigao del Norte, and the system was tested only among selected passengers, drivers, and administrators. As a web-based solution, it requires a stable internet connection and GPS-enabled devices to function properly, and it does not include the development of a native mobile application. Budget, time, and technological resources may further limit the scope and features of the system. Online payment functionality depends on the availability and reliability of third-party payment service providers; in this study, GCash checkout was demonstrated using a PayMongo test account only, and production use was not implemented or evaluated. Real GCash payouts and live transactions require an approved business or duly registered sole proprietor merchant account with the payment provider, and this study does not claim compliance with or completion of those legal and commercial requirements. Finally, data privacy and security concerns may limit access to real operational data during system testing and evaluation.
 
 ### Significance of the Study
 
@@ -301,15 +278,7 @@ Prepare production-ready configuration and technical/user documentation.
 
 ### 4.3 System Architecture
 
-The implemented system uses a modern web architecture:
-
-- **Frontend:** Next.js App Router with TypeScript and shadcn UI components.
-- **Backend/API:** Next.js server routes for booking, registration, driver/admin operations, and SOS handling.
-- **Database:** PostgreSQL with Prisma schema and normalized role-based entities.
-- **Authentication:** NextAuth with credential-based login and role-aware redirection.
-- **Access Control:** Passenger, Driver, and Admin dashboards with protected routes.
-- **Media Storage:** Cloudinary for profile image upload and delivery.
-- **Payment Gateway:** PayMongo for GCash and online payment processing.
+The implemented system uses a modern web architecture. The frontend is built with Next.js App Router, TypeScript, and shadcn UI components. The backend and API layer employs Next.js server routes for booking, registration, driver and admin operations, and SOS handling, together with location APIs for driver and passenger live coordinates, a maps API for OSRM route and duration estimation, document upload APIs for driver and passenger verification files, and a booking-scoped counterparty profile API for safe profile viewing during active trips. PostgreSQL serves as the database, managed through a Prisma schema with normalized role-based entities. Authentication uses NextAuth with credential-based login and role-aware redirection. Access control is implemented through separate Passenger, Driver, and Admin dashboards with protected routes. Cloudinary handles profile image upload and delivery, while PayMongo supports GCash and online payment processing.
 
 ### 4.4 Data Gathering Procedure
 
