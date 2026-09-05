@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 
 const ACTIVE_STATUSES = ["ACCEPTED", "PICKED_UP", "IN_PROGRESS"];
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
@@ -19,16 +19,15 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  const user = session.user as { id: string; role: string };
 
   const booking = await prisma.booking.findUnique({
     where: { id },

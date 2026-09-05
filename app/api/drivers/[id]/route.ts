@@ -1,20 +1,18 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
-
-
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
+import { SAFE_USER_SELECT } from "@/lib/safe-select";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  const user = session.user as { id: string; role: string };
 
   try {
     const body = await req.json();
@@ -26,7 +24,7 @@ export async function PATCH(
           ...(body.status ? { status: body.status } : {}),
           ...(typeof body.isAvailable === "boolean" ? { isAvailable: body.isAvailable } : {}),
         },
-        include: { user: true },
+        include: { user: { select: SAFE_USER_SELECT } },
       });
       return NextResponse.json({ driver });
     }

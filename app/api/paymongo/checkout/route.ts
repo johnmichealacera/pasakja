@@ -1,20 +1,20 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 import { createPaymentIntent } from "@/lib/paymongo";
 import {
   PASSENGER_HAS_OPEN_BOOKING_MESSAGE,
   passengerOpenBookingWhere,
 } from "@/lib/booking-guards";
 import { passengerTotal } from "@/lib/commission";
+import { notifyEligibleDrivers } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = session.user as { id: string; role: string };
   if (user.role !== "PASSENGER") {
     return NextResponse.json(
       { error: "Only passengers can pay online" },
@@ -121,6 +121,8 @@ export async function POST(req: NextRequest) {
       where: { id: booking.id },
       data: { paymongoPaymentIntentId: pi.data.id },
     });
+
+    await notifyEligibleDrivers(booking);
 
     return NextResponse.json({
       booking: { ...booking, paymongoPaymentIntentId: pi.data.id },

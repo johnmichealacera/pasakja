@@ -60,6 +60,8 @@ model User {
   name      String
   phone        String?
   profileImage String?
+  /** Expo push token for the mobile app — null until the device registers one. */
+  pushToken    String?
   role         UserRole @default(PASSENGER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

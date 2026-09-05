@@ -1,6 +1,9 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser } from "@/lib/api-auth";
 import { paymongoRequest } from "@/lib/paymongo";
+
+/** The mobile app's custom scheme (app.config.ts: `scheme: "pasakja"`) — the only non-web return_url allowed. */
+const MOBILE_RETURN_URL_PREFIX = "pasakja://payment-return";
 
 interface AttachResponse {
   data: {
@@ -16,15 +19,16 @@ interface AttachResponse {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const { paymentIntentId, clientKey } = (await req.json()) as {
+    const { paymentIntentId, clientKey, returnUrl: requestedReturnUrl } = (await req.json()) as {
       paymentIntentId: string;
       clientKey: string;
+      returnUrl?: string;
     };
 
     if (!paymentIntentId || !clientKey) {
@@ -34,8 +38,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // PayMongo rejects a non-http(s) return_url outright, so the mobile app
+    // can't hand its deep link straight through — it goes via this server's
+    // own http(s) bridge route instead, which redirects on into the deep link.
     const origin = req.nextUrl.origin;
-    const returnUrl = `${origin}/passenger/payment/return?pi=${paymentIntentId}`;
+    const returnUrl = requestedReturnUrl?.startsWith(MOBILE_RETURN_URL_PREFIX)
+      ? `${origin}/api/paymongo/mobile-bridge?pi=${paymentIntentId}`
+      : `${origin}/passenger/payment/return?pi=${paymentIntentId}`;
 
     const pmRes = await paymongoRequest<{ data: { id: string } }>(
       "/payment_methods",

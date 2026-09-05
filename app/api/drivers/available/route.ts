@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 
 const STALE_MS = 5 * 60 * 1000; // hide drivers not seen in the last 5 minutes
 const AVG_SPEED_KMH = 20;       // conservative local tricycle/motorcycle speed
@@ -18,8 +18,8 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

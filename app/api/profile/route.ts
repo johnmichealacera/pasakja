@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -13,7 +13,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "No image URL provided" }, { status: 400 });
   }
 
-  const user = session.user as { id: string };
   await prisma.user.update({
     where: { id: user.id },
     data: { profileImage },

@@ -1,7 +1,8 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 import { getPaymentIdFromIntent, issueRefund } from "@/lib/paymongo";
+import { notifyAdmins, notifyUser } from "@/lib/notifications";
 
 const DISPUTE_WINDOW_MS = 2 * 60 * 60 * 1000; // 2-hour window after completion
 
@@ -14,13 +15,12 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  const user = session.user as { id: string; role: string };
 
   if (user.role !== "PASSENGER") {
     return NextResponse.json({ error: "Only passengers can dispute a booking" }, { status: 403 });
@@ -79,6 +79,8 @@ export async function POST(
     },
   });
 
+  await notifyAdmins("New refund dispute", reason.trim(), { bookingId: id, type: "dispute" });
+
   return NextResponse.json({ success: true });
 }
 
@@ -91,9 +93,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (role !== "ADMIN") {
+  const user = await getAuthUser(req);
+  if (user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -112,11 +113,24 @@ export async function PATCH(
     return NextResponse.json({ error: "No pending dispute for this booking" }, { status: 400 });
   }
 
+  const passenger = await prisma.passenger.findUnique({
+    where: { id: booking.passengerId },
+    select: { userId: true },
+  });
+
   if (action === "deny") {
     await prisma.booking.update({
       where: { id },
       data: { disputeStatus: "DENIED" },
     });
+    if (passenger) {
+      await notifyUser(
+        passenger.userId,
+        "Dispute denied",
+        "Your refund request was reviewed and denied.",
+        { bookingId: id, type: "dispute_denied" }
+      );
+    }
     return NextResponse.json({ success: true, action: "denied" });
   }
 
@@ -146,6 +160,15 @@ export async function PATCH(
         refundId: refund.data.id,
       },
     });
+
+    if (passenger) {
+      await notifyUser(
+        passenger.userId,
+        "Refund approved",
+        "Your refund has been approved and issued to your GCash account.",
+        { bookingId: id, type: "dispute_refunded" }
+      );
+    }
 
     return NextResponse.json({ success: true, action: "refunded", refundId: refund.data.id });
   } catch (err) {

@@ -1,24 +1,26 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 import {
   PASSENGER_HAS_OPEN_BOOKING_MESSAGE,
   passengerOpenBookingWhere,
 } from "@/lib/booking-guards";
+import { SAFE_USER_SELECT } from "@/lib/safe-select";
+import { notifyEligibleDrivers } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const disputeStatus = searchParams.get("disputeStatus");
   const limit = parseInt(searchParams.get("limit") ?? "10");
 
   try {
-    const user = session.user as { id: string; role: string };
 
     if (user.role === "PASSENGER") {
       const passenger = await prisma.passenger.findUnique({
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
           ...(status ? { status: status as never } : {}),
         },
         include: {
-          driver: { include: { user: true } },
+          driver: { include: { user: { select: SAFE_USER_SELECT } } },
           trip: true,
           rating: true,
         },
@@ -55,7 +57,7 @@ export async function GET(req: NextRequest) {
             : { driverId: driver.id, ...(status ? { status: status as never } : {}) }),
         },
         include: {
-          passenger: { include: { user: true } },
+          passenger: { include: { user: { select: SAFE_USER_SELECT } } },
           trip: true,
           rating: true,
         },
@@ -67,10 +69,13 @@ export async function GET(req: NextRequest) {
 
     if (user.role === "ADMIN") {
       const bookings = await prisma.booking.findMany({
-        where: status ? { status: status as never } : {},
+        where: {
+          ...(status ? { status: status as never } : {}),
+          ...(disputeStatus ? { disputeStatus: disputeStatus as never } : {}),
+        },
         include: {
-          passenger: { include: { user: true } },
-          driver: { include: { user: true } },
+          passenger: { include: { user: { select: SAFE_USER_SELECT } } },
+          driver: { include: { user: { select: SAFE_USER_SELECT } } },
           trip: true,
         },
         orderBy: { createdAt: "desc" },
@@ -87,12 +92,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = session.user as { id: string; role: string };
   if (user.role !== "PASSENGER") {
     return NextResponse.json({ error: "Only passengers can book rides" }, { status: 403 });
   }
@@ -169,6 +173,8 @@ export async function POST(req: NextRequest) {
       }
       throw err;
     }
+
+    await notifyEligibleDrivers(booking);
 
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {

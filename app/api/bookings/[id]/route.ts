@@ -1,24 +1,24 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/api-auth";
 import { driverAmount, platformFee, passengerTotal, resolveBaseFare } from "@/lib/commission";
 import { getPaymentIdFromIntent, issueRefund } from "@/lib/paymongo";
 import {
   DRIVER_HAS_ACTIVE_BOOKING_MESSAGE,
   driverActiveBookingWhere,
 } from "@/lib/booking-guards";
+import { notifyUser } from "@/lib/notifications";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getAuthUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  const user = session.user as { id: string; role: string };
 
   // Helper: delete the driver's live location row when a ride ends
   async function clearDriverLocation(driverId: string) {
@@ -125,6 +125,19 @@ export async function PATCH(
           throw err;
         }
 
+        if (accepted) {
+          const passenger = await prisma.passenger.findUnique({
+            where: { id: accepted.passengerId },
+            select: { userId: true },
+          });
+          if (passenger) {
+            await notifyUser(passenger.userId, "Driver on the way", "A driver accepted your ride request.", {
+              bookingId: id,
+              type: "booking_accepted",
+            });
+          }
+        }
+
         return NextResponse.json({ booking: accepted });
       }
 
@@ -188,6 +201,18 @@ export async function PATCH(
         // Clear live location — ride is done, location must not leak to future rides
         await clearDriverLocation(driver.id);
         await clearPassengerLocation(booking.passengerId);
+
+        const passenger = await prisma.passenger.findUnique({
+          where: { id: booking.passengerId },
+          select: { userId: true },
+        });
+        if (passenger) {
+          await notifyUser(passenger.userId, "Trip completed", "How was your ride? Rate your driver.", {
+            bookingId: id,
+            type: "booking_completed",
+          });
+        }
+
         return NextResponse.json({ booking: updated });
       }
 
@@ -231,7 +256,19 @@ export async function PATCH(
           where: { id },
           data: { status: "CANCELLED" },
         });
-        if (booking.driverId) await clearDriverLocation(booking.driverId);
+        if (booking.driverId) {
+          await clearDriverLocation(booking.driverId);
+          const driver = await prisma.driver.findUnique({
+            where: { id: booking.driverId },
+            select: { userId: true },
+          });
+          if (driver) {
+            await notifyUser(driver.userId, "Ride cancelled", "The passenger cancelled this ride.", {
+              bookingId: id,
+              type: "booking_cancelled",
+            });
+          }
+        }
         await clearPassengerLocation(booking.passengerId);
 
         // Auto-refund: GCash booking cancelled before pickup → refund immediately
